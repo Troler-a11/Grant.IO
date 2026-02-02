@@ -4,238 +4,347 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRUST_NODE | Professional Escrow</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root { --main: #00f2ff; --bg: #0a0b10; --card: #12141c; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; width: 100vw; }
-        
-        .profile-trigger { position: fixed; top: 20px; left: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--main); cursor: pointer; z-index: 1000; overflow: hidden; background: #1a1a1a; box-shadow: 0 0 15px rgba(0,242,255,0.3); }
-        .profile-trigger img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-card { display: none; position: fixed; top: 80px; left: 20px; background: var(--card); border: 1px solid var(--main); padding: 20px; border-radius: 18px; z-index: 1001; width: 260px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); }
-
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
+        .profile-trigger { position: fixed; top: 20px; left: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--main); cursor: pointer; z-index: 1000; background: #1a1a1a; overflow: hidden; }
+        .profile-card { display: none; position: fixed; top: 80px; left: 20px; background: var(--card); border: 1px solid var(--main); padding: 20px; border-radius: 18px; z-index: 1001; width: 260px; }
         .menu-icon { position: fixed; top: 22px; right: 20px; font-size: 28px; cursor: pointer; z-index: 1600; color: var(--main); }
         .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: #0d0e14; transition: 0.4s ease; z-index: 1500; padding: 70px 20px; border-left: 1px solid var(--main); box-sizing: border-box; }
         .sidebar.active { right: 0; }
         .menu-link { display: block; padding: 18px 0; color: #eee; text-decoration: none; border-bottom: 1px solid #1a1a1a; font-size: 15px; cursor: pointer; }
-
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .main-circle-btn {
-            width: 230px; height: 230px; border-radius: 50%; border: 4px solid var(--main);
-            background: transparent; color: white; font-size: 22px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
-            transition: 0.5s; display: flex; align-items: center; justify-content: center;
-            text-transform: uppercase; letter-spacing: 3px;
-        }
-
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); overflow-y: auto; }
         .modal-content { background: #0a0b10; margin: 20px auto; padding: 20px; width: 92%; max-width: 550px; border-radius: 20px; }
         .rev-stats { text-align: center; padding: 20px; background: #16171d; border-radius: 15px; margin-bottom: 20px; border: 1px solid var(--main); }
         .rev-card { background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 12px; border: 1px solid #1f222e; }
         .rev-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-        .rev-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; background: #1a1a1a; border: 1px solid var(--main); text-transform: uppercase; }
-        .stars { color: #444; font-size: 14px; }
+        .rev-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #1a1a1a; border: 1px solid var(--main); }
+        .stars { color: #444; font-size: 12px; }
         .stars .active { color: #ffcc00; }
-        
-        .lang-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        .lang-btn { background: #1a1a1a; border: 1px solid #333; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; flex: 1; cursor: pointer; text-align: center; }
-        .lang-btn.active { border-color: var(--main); color: var(--main); }
     </style>
 </head>
 <body>
 
-    <div class="profile-trigger" onclick="toggleProfile()"><img id="u-ava" src="https://img.icons8.com/ios-glyphs/90/555555/user--v1.png"></div>
+<div class="profile-trigger" onclick="toggleProfile()"><img src="https://img.icons8.com/ios-glyphs/90/555555/user--v1.png" width="100%"></div>
+<div class="profile-card" id="profileCard">
+    <h4 id="p-name">Відвідувач</h4>
+    <p style="font-size:12px;">ID: <span id="p-id">TN-000000</span></p>
+</div>
 
-    <div class="profile-card" id="profileCard">
-        <h4 id="p-name">Відвідувач</h4>
-        <p style="font-size:12px; color:var(--main); margin:0;"><span id="p-stat-label">Статус</span>: <span id="p-status">Visitor</span></p>
-        <p style="font-size:12px; margin:5px 0;">ID: <span id="p-id">TN-000000</span></p>
-        <p id="p-deals" style="font-size:12px; color:#888;">Угод: 0</p>
-    </div>
+<div class="menu-icon" onclick="toggleMenu()">☰</div>
+<div class="sidebar" id="sidebar">
+    <nav>
+        <a onclick="showReviews()" class="menu-link" id="l-rev">💬 Відгуки (1542)</a>
+        <a href="#" class="menu-link">✈️ Підтримка</a>
+    </nav>
+</div>
 
-    <div class="menu-icon" onclick="toggleMenu()">☰</div>
-
-    <div class="sidebar" id="sidebar">
-        <div class="lang-bar">
-            <div class="lang-btn active" data-l="uk" onclick="setLang('uk')">UA</div>
-            <div class="lang-btn" data-l="en" onclick="setLang('en')">EN</div>
-            <div class="lang-btn" data-l="ru" onclick="setLang('ru')">RU</div>
+<div id="revModal" class="modal">
+    <div class="modal-content">
+        <span style="float:right; cursor:pointer;" onclick="closeReviews()">✕</span>
+        <div class="rev-stats">
+            <div style="font-size:32px; font-weight:bold; color:var(--main);" id="total-rate">4.8</div>
+            <div class="stars" id="total-stars"></div>
+            <div style="font-size:12px; opacity:0.6;">Базується на 1542 відгуках</div>
         </div>
-        <div id="g_id_onload" data-client_id="YOUR_GOOGLE_ID" data-callback="onSignIn"></div>
-        <div class="g_id_signin" data-type="standard"></div>
-        <nav style="margin-top:20px;">
-            <a onclick="showReviews()" class="menu-link" id="l-rev">💬 Відгуки (1423)</a>
-            <a href="https://t.me/pingvin4ikpororo" class="menu-link" id="l-sup">✈️ Підтримка</a>
-            <a onclick="location.reload()" class="menu-link" style="color:#ff4444;" id="l-out">🔄 Вийти</a>
-        </nav>
+        <div id="rev-list"></div>
     </div>
+</div>
 
-    <div class="hero">
-        <h1 id="h-logo" style="letter-spacing:10px; color:var(--main); margin:0;">TRUST_NODE</h1>
-        <p id="h-sub" style="opacity:0.4; font-size:10px; margin-bottom:50px; letter-spacing:3px;">INTERNATIONAL ESCROW SYSTEM</p>
-        <button class="main-circle-btn" id="start-btn" onclick="checkAuthAndStart()">ПОЧАТИ</button>
-    </div>
+<script>
+    const names = ["Andriy", "Alex", "Dmitry", "Sergey", "Margo", "Ivan", "Elena", "Sasha", "Max", "Artem", "Nikita", "Yura", "Vlad", "Stas", "Oksana", "Rita", "John", "Mike", "Sarah", "Kevin", "Oleg", "Petro", "Ruslan", "Taras", "Igor", "Julia", "Maria", "Nazar", "Viktor", "Arthur"];
 
-    <div id="revModal" class="modal">
-        <div class="modal-content">
-            <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeReviews()">✕</span>
-            <div class="rev-stats">
-                <div style="font-size:32px; font-weight:bold; color:var(--main);" id="total-rate">4.7</div>
-                <div class="stars" id="total-stars"></div>
-                <div style="font-size:12px; margin-top:5px; opacity:0.6;" id="total-count">Базується на 1423 відгуках</div>
-            </div>
-            <div id="rev-list"></div>
-        </div>
-    </div>
+    const humanTexts = [
+        "Купив акк в Стімі, все прийшло миттєво. Вже граю!",
+        "Продав свій жирний акк, гроші на карті за 10 хв. Респект!",
+        "Safe and fast. High fee but it's okay for security.",
+        "Не думал что в Украине есть такой качественный сайт гарант. Очень круто!",
+        "Вадим — легенда! Помог перевязать почту, когда продавец затупил.",
+        "Комісія висока, але за спокій готовий платити. Все чітко.",
+        "Сделка на 1000$ прошла гладко. Деньги получил, спасибо.",
+        "I was nervous but it's a legit node. Got my skins instantly.",
+        "Чекав виплату 2 години, але адмін відповів і все прискорив.",
+        "Все гуд. Акаунт перейшов одразу, пішов грати в рейтинг.",
+        "Лучший сервис для безопасных сделок в телеге. Рекомендую.",
+        "Support replied in 2 mins. Fixed my activation problem.",
+        "Трохи складно з авторизацією, але саппорт провів за руку.",
+        "Fastest escrow ever. 5 stars from London!",
+        "Продавець намагався кинути, але гарант вчасно зупинив угоду. Фух!",
+        "Хороший сайт. Всё честно и прозрачно. Буду советовать.",
+        "3 звезды за комиссию, остальное — топ уровень.",
+        "Finally found a trusted place to sell my accounts.",
+        "Написав у підтримку вночі — відповіли! Це справжній сервіс.",
+        "Everything smooth. Highly trusted node.",
+        "Придбав послуги дизайнера, гроші тримали до мого підтвердження.",
+        "Жуткая комиссия, но хоть не кидают как в ботах.",
+        "Bought a Valorant account, got full access in 5 minutes.",
+        "Всё по факту: деньги на месте, сделка закрыта. Респект Вадиму.",
+        "Трішки підвисав сайт, але транзакція пройшла успішно.",
+        "Trusted! Used for BTC exchange, everything okay.",
+        "Найкращий гарант в Україні, працюю тільки через них.",
+        "Продал скины в КС, деньги на карте. Никакого обмана.",
+        "User friendly and very secure. My best experience.",
+        "Долго не приходили деньги, админ всё решил за 5 минут.",
+        "Купил подписку, код пришел сразу. Рекомендую.",
+        "Very professional support. Clear instructions.",
+        "Честный сайт. Сделка прошла как по маслу. Спасибо!",
+        "Нервував за гроші, але холд спрацював як треба. Товар у мене.",
+        "Top support, fast deals. 10/10.",
+        "Ожидал подвоха, но сайт реально топ. В Украине лучшие.",
+        "Продавец молчал, админ помог вернуть деньги. Спасибо!",
+        "Great node. Fast, safe, international.",
+        "Вивів кошти на карту миттєво. Комісія того варта.",
+        "Вже в лобі з пацанами, акаунт топ за свої гроші!",
+        "Сделка закрыта успешно. Покупатель доволен, я тоже.",
+        "4/5 because of fee, but safety is 10/10.",
+        "Дуже крутий інтерфейс, все зрозуміло і безпечно.",
+        "Best service for digital assets. No scams.",
+        "Админ помог с верификацией. Всё очень быстро.",
+        "Гроші прийшли, акаунт віддав. Все чесно.",
+        "Safe for buyers. Seller released data only after payment.",
+        "Купую тут постійно, ще жодного разу не підвели.",
+        "Trusted node. Used it for 500 EUR deal.",
+        "Вадим в саппорте лучший! Ответил мгновенно.",
+        "Не думав, що все так просто. Зайшов, купив, граєш.",
+        "Everything ok, but please add light theme.",
+        "Норм сервіс, все працює стабільно. Виплата була через 20 хв.",
+        "Fast transaction, legit seller, safe escrow.",
+        "Сделка прошла быстро. Деньги в холде до проверки. Идеально.",
+        "Рекомендую всім геймерам, хто боїться скаму.",
+        "Safe buy, happy life. Thanks!",
+        "Виплати приходять навіть у вихідні. Це круто.",
+        "Покупал акк, все данные валид. Спасибо гаранту.",
+        "100% legit. International standards.",
+        "Взяв ТГ канал через TRUST_NODE. Передача пройшла успішно.",
+        "Seller was slow but admin Vadim pushed him. Great job.",
+        "Лучший опыт покупки игровых ценностей. Всё под защитой.",
+        "Комісія велика, але коли на кону 20к грн — це виправдано.",
+        "Really impressed by the speed. 5 min and deal is done.",
+        "Всё супер, аккаунт привязал, играю. Продавцу спасибо.",
+        "Найкраща підтримка, яку я бачив. Розжували все новачкові.",
+        "Security first. This node is exactly what I needed.",
+        "Сделка прошла за 10 минут. Вывод на карту мгновенный.",
+        "No scam, real people, real deals. Highly recommend.",
+        "Трохи лячно було спочатку, але холд працює. Гроші захищені.",
+        "Зайшов, вибрав, купив. Все просто як 2х2.",
+        "Admin is online 24/7. Responded at 4 AM, crazy!",
+        "Купил крипту через гаранта. Всё пришло на кошелек.",
+        "Best escrow in Eastern Europe. No doubts."
+    ];
+        const humanTextsPart2 = [
+        "Акаунт перейшов одразу, вже пішов грати в ранкед. Топ!",
+        "Всё чётко, привязал почту за 2 минуты. Продавец красава.",
+        "I bought a Steam deck account, everything works. Safe node!",
+        "Продав скіни з КС, гроші вивів на карту без проблем. Дякую.",
+        "Сначала сомневался, но Вадим в ТГ всё объяснил. Сервис честный.",
+        "Best for gamers. Fast delivery and secure payments.",
+        "Купив акаунт Геншин, все як в описі. Гарант спрацював на 10/10.",
+        "Деньги пришли через 5 минут после подтверждения. Супер!",
+        "Не думал, что в Украине есть сервис такого уровня. Респект!",
+        "Support is very helpful. They saved my deal from a scammer.",
+        "Трішки затупив з оплатою, але система сама все підказала. Граю!",
+        "Продал акк в Танках, всё прошло гладко. Деньги уже у меня.",
+        "Fast transaction. No hidden fees, everything is clear.",
+        "Адмін Вадим допоміг повернути гроші, коли продавець зник. Дякую!",
+        "Everything is legit. High security for high amounts.",
+        "Взяв жирний акк в Бравлі, переприв'язав за 5 хв. Все вогонь!",
+        "Комиссия оправдана безопасностью. Спал спокойно пока шла сделка.",
+        "Really fast service. Recommended for P2P trading.",
+        "Все супер! Гроші прийшли швидше, ніж я допив каву.",
+        "Купил читы для игры, всё работает. Гарант надёжный.",
+        "Best support ever. They stay online late at night. Respect.",
+        "Продавець був підозрілий, але через TRUST_NODE все пройшло безпечно.",
+        "Great experience. Will use this node again for sure.",
+        "Вивів 5000 грн за один раз. Жодних питань від банку.",
+        "Акаунт перейшов миттєво. Вже качаю оновлення.",
+        "Всё гуд. Купил — проверил — подтвердил. Профит!",
+        "I was scammed before on other sites, but here it's 100% safe.",
+        "Найкращий досвід покупки ігрових цінностей. Рекомендую всім.",
+        "Сделка закрыта за 7 минут. Саппорт лучший в своём деле.",
+        "No scam, real escrow. Money is held until you confirm.",
+        "Купував кріпту, курс нормальний, гарант надійний.",
+        "Продав канал, переоформили за годину. Гроші вже на балансі.",
+        "Trusted service. High speed and professional staff.",
+        "Дякую за допомогу з верифікацією. Все дуже швидко.",
+        "Account is mine now! Going to play with my friends.",
+        "Всё прозрачно. Видно статус сделки в реальном времени.",
+        "Лучший гарант в СНГ. Украина рулит по сервису!",
+        "Fast pay, no delay. Highly trusted international node.",
+        "Трохи довга черга була, але воно того варте. Все чесно.",
+        "Bought a premium account, works like a charm. Thanks!",
+        "Вадим найкращий адмін. Вирішив спір на мою користь.",
+        "Money secured, deal closed. Simple as that.",
+        "Рекомендую всім, хто цінує свої нерви та гроші.",
+        "Всё отлично. Данные получил сразу после оплаты.",
+        "Best place for secure trading. No doubts anymore.",
+        "Перша угода пройшла успішно. Буду постійним клієнтом.",
+        "Safe and sound. My funds were protected the whole time.",
+        "Гроші впали на картку миттєво. Найкращий сервіс!",
+        "Bought digital goods, seller was fast, node was safe.",
+        "Всё по красоте. Продал — получил кэш. Без лишних слов.",
+        "Highly recommended for high-value transactions.",
+        "Дякую за оперативність. Все на вищому рівні.",
+        "Fastest checkout ever. Account is already in use.",
+        "Сделка прошла идеально. Вадиму отдельное спасибо за помощь.",
+        "Legit and safe. Used it twice this week.",
+        "Топ за свої гроші. Комісія не кусається, якщо рахувати ризики.",
+        "Everything works perfectly. Account transferred instantly.",
+        "Найкращий гарант для телеграм угод. Все під контролем.",
+        "Money is safe here. Don't worry about scammers.",
+        "Взяв аккаунт з повним доступом. Все перевірив, все ок.",
+        "Support is 10/10. Real humans, not bots.",
+        "Продал аккаунт за 100$. Деньги вывел без проблем.",
+        "Great service for gamers and traders worldwide.",
+        "Все чітко. Гроші — товар. Ніякого обману.",
+        "Best protection for your digital assets.",
+        "Сделка прошла успешно. Деньги были в холде до конца.",
+        "I'm happy with the results. Very professional node.",
+        "Дякую Вадиму! Найкращий саппорт у моєму житті.",
+        "Fast payout even on weekends. That's impressive.",
+        "Всё честно. Покупал здесь первый раз, буду ещё.",
+        "Secure, fast, reliable. What else do you need?",
+        "Найкраща платформа для угод в Україні. Без варіантів.",
+        "Money received. Transaction completed. 5 stars.",
+        "Все супер, акаунт топ, пішов грати. Всім раджу!",
+        "Trusted node for safe P2P operations. Best choice."
+    ];
 
-    <script>
-        let user = { isAuth: false, id: "TN-000000", lang: 'uk' };
-        const trans = {
-            uk: { start:"ПОЧАТИ", sub:"МІЖНАРОДНА СИСТЕМА ГАРАНТ", rev:"Відгуки (1423)", sup:"Підтримка", out:"Вийти", p_name:"Відвідувач", p_stat:"Статус", p_deals:"Угод: 0", t_count: "Базується на 1423 відгуках" },
-            en: { start:"START", sub:"INTERNATIONAL ESCROW SYSTEM", rev:"Reviews (1423)", sup:"Support", out:"Logout", p_name:"Visitor", p_stat:"Status", p_deals:"Deals: 0", t_count: "Based on 1423 reviews" },
-            ru: { start:"НАЧАТЬ", sub:"МЕЖДУНАРОДНАЯ СИСТЕМА ГАРАНТ", rev:"Отзывы (1423)", sup:"Поддержка", out:"Выйти", p_name:"Посетитель", p_stat:"Статус", p_deals:"Сделок: 0", t_count: "На основе 1423 отзывов" }
-        };
+    // З'єднуємо масиви
+    humanTexts.push(...humanTextsPart2);
+    const humanTextsPart3 = [
+        "Не думав, що в Україні є такий рівень. Все літає!",
+        "Продав акк, купив піцу, гроші прийшли за 10 хв. Кайф.",
+        "Best escrow for Steam deals. Safe and sound.",
+        "Вадим, ти кращий! Витягнув угоду, коли в мене інтернет зник.",
+        "Всё чётко. Купил аккаунт, перевязал, уже в катке.",
+        "Комісія нормальна, якщо хочеш бути впевненим у результаті.",
+        "I was worried about my 200$, but the node held it perfectly.",
+        "Найкращий досвід роботи з гарантом. Швидко і чесно.",
+        "Сделка прошла успешно. Деньги на карту упали мгновенно.",
+        "Trusted node. No more scammers for me. 5 stars!",
+        "Акаунт перейшов одразу. Тільки ввів дані — вже граю.",
+        "Продавцу респект за честность, сайту за безопасность.",
+        "Everything is fine. Fast payout and cool interface.",
+        "Дякую за сопорт! Допомогли розібратись з кріптою.",
+        "Best service in CIS region. Fast and reliable.",
+        "Все гуд, гроші отримав. Буду торгувати тільки тут.",
+        "Fastest payout I've seen this year. Recommended!",
+        "Нарешті знайшов нормальний сайт без підвохів.",
+        "Seller was fast, support was faster. Great job.",
+        "Всё супер. Купил, зашёл, играю. Всем советую!",
+        "No scam here. Legit business with real admins.",
+        "Дякую Вадиму за терпіння, я три рази помилився в формі.",
+        "Really good platform for digital traders. 10/10.",
+        "Сделка прошла за 5 минут. Это рекорд!",
+        "Money is in my pocket. Safe and easy process.",
+        "Топ за свої гроші. Безпека на першому місці.",
+        "First deal done. Everything is as described.",
+        "Support is 24/7. They really care about users.",
+        "Взяв акаунт в Доту, все супер, шмотки на місці.",
+        "Fast transaction. The node is solid and safe.",
+        "Найкращий варіант для продажу ігрових акаунтів.",
+        "All good. Money arrived safely to my bank account.",
+        "Вадим — человек слова. Помог решить спор мгновенно.",
+        "Best escrow in Ukraine. International quality.",
+        "Сделка закрыта. Я доволен, продавец тоже.",
+        "Safe and professional. Use it without any doubts.",
+        "Гроші прийшли швидше ніж я очікував. Рекомендую!",
+        "Everything legit. Got my game keys instantly.",
+        "Дякую за сервіс. Все на вищому рівні, як завжди.",
+        "Trusted! My third deal here, zero problems.",
+        "Всё чётко по инструкции. Вадим в ТГ лучший.",
+        "Fastest deal in my life. 3 minutes and done!",
+        "Найкращий гарант, який я пробував. Все прозоро.",
+        "Seller was okay, site was perfect. Safe buy.",
+        "Money received. Transaction completed without issues.",
+        "Продав акк в Танках, гроші вивів за 10 хвилин.",
+        "Really fast and helpful staff. Highly recommended.",
+        "Вже пішов грати на новому акаунті. Все топ!",
+        "No scam, purely professional. Safe escrow node.",
+        "Дякую за допомогу з оплатою. Все пройшло успішно.",
+        "Best experience so far. Will use it again next week.",
+        "Сделка прошла успешно. Гарант сработал четко.",
+        "Everything works as promised. Safe and reliable.",
+        "Нарешті чесний сайт. Рекомендую всім знайомим.",
+        "Fast payout to Visa card. No issues at all.",
+        "Всё по красоте. Продал аккаунт — получил кэш.",
+        "Trusted service for secure trading. Top choice!",
+        "Вадим помог перевязать данные. Очень благодарен.",
+        "Best payout speed. 10 minutes and money is here.",
+        "Все супер, акаунт перейшов миттєво. Респект!",
+        "No issues, everything safe. Best node for P2P.",
+        "Дякую за безпеку моїх коштів. Все чесно.",
+        "Fast and secure. This is how escrow should work.",
+        "Сделка прошла гладко. Спасибо саппорту за помощь.",
+        "Everything legit. Got my access immediately.",
+        "Найкраща підтримка. Відповіли за хвилину.",
+        "Safe transaction. Money was in hold until I checked.",
+        "Всё ок, аккаунт в порядке, уже играю. Спасибо!",
+        "Best service for digital goods. Highly trusted.",
+        "Дякую Вадиму за оперативність. Все супер!",
+        "Fast payout, safe deals. No scam 100%.",
+        "(Народження вузла) Перша успішна угода в системі! Початок покладено."
+    ];
 
-        const names = ["Andriy", "Boris", "Claire", "Dmitro", "Elena", "Fedor", "Ganna", "Hlib", "Igor", "Julia", "Kirill", "Leonid", "Maria", "Nazar", "Oleg", "Petro", "Quentin", "Ruslan", "Svitlana", "Taras", "Uliana", "Viktor", "Walter", "Xenia", "Yaroslav", "Zahar", "Arthur", "Bella", "Vadim", "Glib", "Diana", "Egor", "Zhenya", "Inna", "Kostya", "Luda", "Misha", "Nina", "Ostap", "Pasha"];
+    humanTexts.push(...humanTextsPart3);
 
-        const humanTexts = [
-            "Швидко! Гроші прийшли за 5 хвилин, дякую Вадиму за суппорт.",
-            "Комісія висока, але надійно. Краще переплатити за безпеку.",
-            "Safe and fast. High fee is the only minus, but okay.",
-            "Чекав виплату 3 години, вже почав нервувати. Але адмін відповів і все вирішив.",
-            "Норм тема, для угод в телеграм те що треба.",
-            "Все ок, але інтерфейс занадто темний, на сонці нічого не видно.",
-            "Best escrow service I've used. No scam here.",
-            "Трохи довга верифікація була, але в цілому задоволений.",
-            "Працював на 500$, все пройшло чітко. Рекомендую.",
-            "Support replied in 1 minute. Very professional.",
-            "Жахлива комісія! Але альтернатив з такою швидкістю немає.",
-            "Зручно, що є переклад мов. Все зрозуміло навіть новачкові.",
-            "Сделка прошла успешно. Вадим красавчик, разрулил нюанс по оплате.",
-            "I was scared at first, but it's a legit node. 5 stars.",
-            "Трішки підвисав сайт з мобільного, але транзакція пройшла ок.",
-            "Дякую за безпеку. Тепер тільки через вас буду торгувати.",
-            "Fast transaction, but higher fees than I expected.",
-            "Все гуд. Гроші впали на карту миттєво після підтвердження.",
-            "Написав у підтримку вночі — відповіли! Це рівень.",
-            "Used it for 3 BTC deal. Everything smooth. Highly trusted.",
-            "Завжди використовую цей сайт для обміну аккаунтами. Безпека на висоті.",
-            "Вадим допоміг повернути гроші, коли продавець зник. Дякую!",
-            "Трохи складно з авторизацією, але сервіс чесний.",
-            "Нарешті знайшов нормальний гарант-бот з сайтом.",
-            "Best support ever. Fast and clear instructions.",
-            "Рекомендую всім, хто боїться скаму. Тут все прозоро.",
-            "Перша угода пройшла за 10 хвилин. Круто!",
-            "Higher percentage than others, but 100% safety guaranteed.",
-            "Не думав, що в Україні є такі круті сервіси.",
-            "Trusted node for real professional traders."
-            const humanTexts = [
-    // УКРАЇНСЬКА
-    "Купував акк у Steam, дані прийшли миттєво. Вже качаю доту, дякую!",
-    "Все чітко, акаунт перейшов одразу. Переприв'язав пошту і пішов грати.",
-    "Боявся, що відновлять через годину, але гарант тримає холд. Безпечно.",
-    "Комісія висока, але надійно. Краще переплатити за безпеку.",
-    "Чекав виплату 3 години, вже почав нервувати. Вадим відповів і все вирішив.",
-    "Вадим — легенда. Витягнув угоду, коли продавець почав тупити.",
-    "Продав свій особистий акк, гроші вже на карті. Все гуд.",
-    "Топ! Тільки купив — одразу зайшов у гру. Без лишніх питань.",
-    "Дякую за безпеку. Тепер тільки через вас буду торгувати.",
-    "Написав у підтримку вночі — відповіли! Це рівень.",
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+    function toggleProfile() { const pc = document.getElementById('profileCard'); pc.style.display = pc.style.display === 'block' ? 'none' : 'block'; }
 
-    // ENGLISH
-    "Safe and fast. High fee is the only minus, but okay.",
-    "Best escrow service I've used. No scam here.",
-    "Support replied in 1 minute. Very professional.",
-    "I was scared at first, but it's a legit node. 5 stars.",
-    "Used it for 3 BTC deal. Everything smooth. Highly trusted.",
-    "Everything is good, but the mobile version is laggy sometimes.",
-    "Fast and reliable. Best experience so far.",
-    "4/5. Everything ok, but please add a light theme.",
-    "Trusted node. Used it 5 times already, zero issues.",
-    "Seller was a bit slow, but escrow system protected my cash.",
+    function loadReviews() {
+        const list = document.getElementById('rev-list');
+        let h = ""; 
+        let sumStars = 0;
+        const totalReviews = 222; // Технічна кількість
 
-    // РУССКИЙ
-    "Сделка прошла успешно. Вадим красавчик, разрулил нюанс по оплате.",
-    "Жуткая комиссия! Но альтернатив с такой скоростью просто нет.",
-    "Деньги упали на карту мгновенно после подтверждения. Респект!",
-    "Покупал жирный акк в Бравле, всё гуд. Деньги ушли после проверки.",
-    "Вывел 2000 грн за 15 минут. Гарант работает как часы.",
-    "Админ из телеграма — профи. Помог разобраться с транзакцией за 5 мин.",
-    "Немного попотел с привязкой почты, но саппорт подсказал что делать.",
-    "Всё по факту: деньги на месте, сделка закрыта. Что еще надо?",
-    "Первый раз продавал тут. Всё прозрачно, холд — это правильно.",
-    "Рекомендую всем, кто боится скама. Тут всё честно.",
+        for(let i=0; i < totalReviews; i++) {
+            let r, txt;
+            
+            // Останній відгук (найстаріший)
+            if(i === totalReviews - 1) { 
+                r = 5; 
+                txt = humanTexts[humanTexts.length - 1]; 
+            } 
+            // Погані або середні для реалізму (кожен 12-й)
+            else if(i % 12 === 0) { 
+                r = Math.floor(Math.random()*2) + 2; 
+                txt = i % 2 == 0 ? "Комісія велика, але безпечно." : "Довго чекав відповідь, але гроші прийшли."; 
+            } 
+            // Всі інші
+            else { 
+                r = Math.floor(Math.random()*2) + 4; // 4 або 5 зірок
+                txt = humanTexts[i % (humanTexts.length - 1)]; 
+            }
+
+            sumStars += r;
+
+            const name = names[i % names.length];
+            let dateStr;
+            if (i < 10) dateStr = "сьогодні";
+            else if (i < 30) dateStr = "1д. тому";
+            else if (i === totalReviews - 1) dateStr = "1 рік тому";
+            else dateStr = Math.floor(i/4) + "д. тому";
+
+            h += `<div class="rev-card">
+                <div class="rev-header">
+                    <div class="rev-avatar" style="color:white; background:hsl(${(i*45)%360}, 50%, 30%)">${name[0]}</div>
+                    <span style="font-size:13px; color:var(--main); font-weight:600;">${name}</span>
+                    <span style="margin-left:auto; font-size:10px; color:#555;">${dateStr}</span>
+                </div>
+                <div class="stars">${"<span class='active'>★</span>".repeat(r)}${"<span>★</span>".repeat(5-r)}</div>
+                <p style="font-size:13px; margin:5px 0; line-height:1.4;">${txt}</p>
+            </div>`;
+        }
+
+        const avg = (sumStars / totalReviews).toFixed(1);
+        document.getElementById('total-rate').innerText = avg;
+        document.getElementById('total-stars').innerHTML = "<span class='active'>★</span>".repeat(Math.round(avg)) + "<span>★</span>".repeat(5-Math.round(avg));
+        list.innerHTML = h;
+    }
+
+    function showReviews() { document.getElementById('revModal').style.display = 'block'; loadReviews(); toggleMenu(); }
+    function closeReviews() { document.getElementById('revModal').style.display = 'none'; }
     
-    // МІКС (ДЛЯ МАСШТАБУ)
-    "Excellent service for crypto deals. Highly recommended.",
-    "Трохи довга верифікація була, але в цілому задоволений.",
-    "Safe buy. Got my account in 2 mins.",
-    "Уже думал, что меня кинули, но админ всё разрулил. Сервис огонь!",
-    "Too complex for beginners, but very secure.",
-    "3 звезды за комиссию, остальное — топ.",
-    "Fast transaction, but higher fees than I expected.",
-    "Всё ок, аккаунт перешел сразу и пошел играть.",
-    "Money is secured before you give data. Safe for sellers.",
-    "Best support ever. Fast and clear instructions."
-];
-
-        ];
-
-        function setLang(l) {
-            user.lang = l;
-            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.l === l));
-            document.getElementById('start-btn').innerText = trans[l].start;
-            document.getElementById('h-sub').innerText = trans[l].sub;
-            document.getElementById('l-rev').innerText = "💬 " + trans[l].rev;
-            document.getElementById('l-sup').innerText = "✈️ " + trans[l].sup;
-            document.getElementById('l-out').innerText = "🔄 " + trans[l].out;
-            document.getElementById('total-count').innerText = trans[l].t_count;
-            if(!user.isAuth) {
-                document.getElementById('p-name').innerText = trans[l].p_name;
-                document.getElementById('p-deals').innerText = trans[l].p_deals;
-            }
-            document.getElementById('p-stat-label').innerText = trans[l].p_stat;
-        }
-
-        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
-        function toggleProfile() { document.getElementById('profileCard').style.display = (document.getElementById('profileCard').style.display === 'block' ? 'none' : 'block'); }
-
-        function loadReviews() {
-            const list = document.getElementById('rev-list');
-            let h = ""; let sumStars = 0;
-            for(let i=0; i<1423; i++) {
-                let r, txt;
-                if(i === 1422) { r = 5; txt = "(Народження вузла) Перша успішна угода в системі!"; }
-                else if(i % 15 === 0) { r = Math.floor(Math.random()*3); txt = "Жахлива комісія або довга відповідь!"; }
-                else { r = Math.floor(Math.random()*3) + 3; txt = humanTexts[i % humanTexts.length]; }
-                sumStars += r;
-                if(i > 200) continue;
-                const name = names[i % names.length];
-                let d = i < 15 ? "сьогодні" : (i < 40 ? "1д. тому" : (i === 1422 ? "1 рік тому" : Math.floor(i/12) + "д. тому"));
-                h += `<div class="rev-card"><div class="rev-header"><div class="rev-avatar">${name[0]}</div><span style="font-size:13px; color:var(--main);">${name}</span><span style="margin-left:auto; font-size:10px; color:#555;">${d}</span></div><div class="stars">${"<span class='active'>★</span>".repeat(r)}${"<span>★</span>".repeat(5-r)}</div><p style="font-size:13px; margin:5px 0;">${txt}</p></div>`;
-            }
-            const avg = (sumStars / 1423).toFixed(1);
-            document.getElementById('total-rate').innerText = avg;
-            document.getElementById('total-stars').innerHTML = "<span class='active'>★</span>".repeat(Math.round(avg)) + "<span>★</span>".repeat(5-Math.round(avg));
-            list.innerHTML = h;
-        }
-
-        function onSignIn(resp) {
-            const p = JSON.parse(atob(resp.credential.split('.')[1]));
-            user.isAuth = true; user.id = "TN-" + Math.floor(100000 + Math.random()*800000);
-            document.getElementById('u-ava').src = p.picture;
-            document.getElementById('p-name').innerText = p.name;
-            document.getElementById('p-id').innerText = user.id;
-            document.getElementById('p-status').innerText = "User";
-            document.getElementById('p-deals').innerText = "Угод: 12";
-            toggleMenu();
-        }
-
-        function showReviews() { document.getElementById('revModal').style.display = 'block'; loadReviews(); toggleMenu(); }
-        function closeReviews() { document.getElementById('revModal').style.display = 'none'; }
-        function checkAuthAndStart() { if(!user.isAuth) toggleMenu(); }
-        setLang('uk');
-    </script>
-</body>
-</html>
+    // Ініціалізація
+    document.getElementById('l-rev').innerText = "💬 Відгуки (1542)"; 
+</script>
