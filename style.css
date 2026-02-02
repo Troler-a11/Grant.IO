@@ -1,0 +1,11 @@
+:root { --main: #00f2ff; --bg: #0a0b10; }
+body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; }
+.hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 20px; }
+.glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; backdrop-filter: blur(10px); }
+.btn-main { background: var(--main); color: black; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+.btn-main:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--main); }
+input { width: 100%; padding: 12px; margin: 10px 0; background: #1a1b23; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+.sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #111; z-index: 999; transition: 0.3s; padding: 50px 20px; text-align: left; }
+.sidebar.active { right: 0; }
+.menu-icon { position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1000; }
+.status-box { background: rgba(0,242,255,0.1); padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 14px; color: var(--main); }
