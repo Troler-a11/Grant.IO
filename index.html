@@ -3,170 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRUST_NODE | International Escrow System</title>
+    <title>TRUST_NODE | Escrow System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <style>
-        :root { --main: #00f2ff; --bg: #0a0b10; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
-        
-        /* Sidebar & Menu */
-        .menu-icon { position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1000; color: var(--main); }
-        .sidebar { position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background: #0d0e14; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999; padding: 60px 25px; border-left: 1px solid var(--main); overflow-y: auto; }
-        .sidebar.active { right: 0; }
-        .menu-link { display: block; padding: 12px 0; color: #ccc; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; }
-        .menu-link:hover { color: var(--main); }
-
-        /* Stats & UI */
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 30px 0; width: 100%; max-width: 800px; }
-        .stat-item { padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); }
-        .stat-item h2 { color: var(--main); margin: 0; font-size: 24px; }
-        
-        .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; width: 100%; max-width: 450px; margin-top: 20px; }
-        
-        .btn-main { padding: 18px 40px; background: var(--main); color: black; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        .btn-main:disabled { background: #222; color: #555; }
-
-        .lang-select { background: none; border: 1px solid var(--main); color: var(--main); padding: 5px; border-radius: 5px; margin-bottom: 20px; }
-        .review-card { background: #14151b; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: left; border-left: 3px solid var(--main); font-size: 13px; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; background: #16171d; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-    </style>
 </head>
 <body>
 
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
 
     <div class="sidebar" id="sidebar">
-        <select class="lang-select">
-            <option>Українська (UA)</option>
-            <option>English (EN)</option>
-            <option>Русский (RU)</option>
-        </select>
-
-        <div id="g_id_onload" data-client_id="ВСТАВ_СВІЙ_ID.apps.googleusercontent.com" data-callback="onSignIn"></div>
+        <div id="g_id_onload" data-client_id="ВСТАВ_GOOGLE_ID" data-callback="onSignIn"></div>
         <div class="g_id_signin" data-type="standard"></div>
-        
-        <div id="user-info" style="margin-top: 30px; display: none;">
-            <p style="font-size:13px; color: var(--main);">Аккаунт Verified ✅</p>
-            <p style="font-size:12px; opacity:0.6">ID: <span id="my-id">TN-******</span></p>
+        <div id="user-info" style="display:none; margin-top:20px;">
+            <p>ID: <span id="my-id">...</span></p>
+            <p>Email: <span id="my-email">...</span></p>
+            <a href="https://t.me/pingvin4ikpororo" target="_blank" class="menu-link">✈️ Підтримка</a>
         </div>
-
-        <nav style="margin-top: 30px;">
-            <a href="#" class="menu-link">🔒 Мої активні угоди</a>
-            <a href="https://t.me/pingvin4ikpororo" target="_blank" class="menu-link" style="color: #0088cc;">✈️ Підтримка @pingvin4ikpororo</a>
-            <a href="#" class="menu-link">📖 База знань (FAQ)</a>
-            <a href="#" class="menu-link">🛡️ Перевірка AML/KYC</a>
-            <a href="#" class="menu-link">📊 Комісії сервісу (11%)</a>
-        </nav>
-
-        <div id="admin-panel" style="display:none; margin-top:30px; border-top: 1px solid gold;">
-            <h4 style="color:gold">ADMIN MESSAGES</h4>
-            <div id="admin-logs" style="font-size: 11px;"></div>
+        <div id="admin-panel" style="display:none; border-top:1px solid gold; margin-top:20px;">
+            <h4 style="color:gold">ADMIN LOGS</h4>
+            <div id="admin-messages"></div>
         </div>
     </div>
 
     <div class="hero">
-        <div style="font-size:50px; font-weight:900; color:var(--main); letter-spacing:10px;">TRUST_NODE</div>
-        <p style="opacity:0.6; letter-spacing: 2px;">SECURE GLOBAL ESCROW SERVICE</p>
-
-        <div class="stats-grid">
-            <div class="stat-item"><h2>10 529</h2><p style="font-size:12px;">Угод</p></div>
-            <div class="stat-item"><h2>$2.9M+</h2><p style="font-size:12px;">Оборот</p></div>
-            <div class="stat-item"><h2>4.96</h2><p style="font-size:12px;">Рейтинг</p></div>
+        <div id="start-screen">
+            <h1 class="logo">TRUST_NODE</h1>
+            <div class="stats"><b>10,000+</b> угод | <b>4.9/5</b> рейтинг</div>
+            <button class="btn-main" id="start-btn" onclick="showConnect()" disabled>ВИКОНАТИ УГОДУ</button>
+            <p id="login-warn">Авторизуйтесь через Google для початку</p>
         </div>
 
-        <div id="login-msg" style="margin-bottom:20px; font-size:14px; color: #777;">Авторизуйтесь для створення угоди</div>
-        <button class="btn-main" id="start-btn" onclick="openStep(1)" disabled>ВИКОНАТИ УГОДУ</button>
-
-        <div class="glass" id="step-id" style="display:none">
-            <h3>З'єднання сесії</h3>
-            <input type="text" id="partner-id" placeholder="Введіть ID партнера">
-            <button class="btn-main" style="width:100%;" onclick="openStep(2)">ПІДКЛЮЧИТИСЯ</button>
+        <div class="glass" id="step-connect" style="display:none">
+            <h3>Створення мосту</h3>
+            <input type="text" id="target-id" placeholder="Введіть ID Покупця">
+            <input type="number" id="deal-price" placeholder="Сума угоди (₴)">
+            <button class="btn-main" onclick="createDeal()">СТВОРИТИ УГОДУ</button>
         </div>
 
-        <div class="glass" id="step-deal" style="display:none">
-            <h3>Параметри транзакції</h3>
-            <select id="currency"><option value="UAH">UAH (₴)</option><option value="USD">USD ($)</option></select>
-            <input type="number" id="price" placeholder="Сума">
-            <button class="btn-main" style="width:100%;" onclick="openStep(3)">ОФОРМИТИ</button>
+        <div class="glass" id="step-confirm" style="display:none">
+            <h3>Запит на угоду!</h3>
+            <p id="confirm-text"></p>
+            <button class="btn-main" onclick="approveDeal(true)">ТАК, ЦЕ Я</button>
+            <button class="btn-main" style="background:#ff4444; margin-top:10px;" onclick="approveDeal(false)">ВІДМОВИТИСЯ</button>
         </div>
 
         <div class="glass" id="step-pay" style="display:none">
-            <h3 id="final-sum">0.00</h3>
-            <p style="font-size:11px; opacity:0.5;">🔒 Stripe Secure Node Integration</p>
-            <input type="text" placeholder="Номер картки">
-            <button class="btn-main" style="width:100%;" onclick="startVerification()">ОПЛАТИТИ</button>
-            <p id="status" style="font-size:12px; color:var(--main); margin-top:15px;"></p>
+            <h2 id="pay-title">До сплати: 0 ₴</h2>
+            <div id="payment-status" class="status-box">Очікування першого внеску...</div>
+            <input type="text" placeholder="Карта **** **** **** ****">
+            <button class="btn-main" onclick="checkMonoBalance()">ПЕРЕВІРИТИ ОПЛАТУ</button>
         </div>
 
-        <div style="width:100%; max-width: 800px; margin-top: 50px;">
-            <h3>Останні відгуки (300+)</h3>
-            <div id="reviews-list"></div>
+        <div class="glass" id="step-finish" style="display:none">
+            <h3 id="finish-msg">Гроші в Гаранта!</h3>
+            <div id="buyer-confirm-area" style="display:none">
+                <p>Отримали товар? Натисніть кнопку нижче:</p>
+                <button class="btn-main" onclick="closeDeal()">ПІДТВЕРДИТИ ОТРИМАННЯ</button>
+            </div>
         </div>
     </div>
 
-<script>
-    const CONFIG = {
-        admin: "ilemberk3356@gmail.com",
-        token: "UDK0o0FIo2-05Cgu5FsYC17_zZU-HITq9VwoWdbReSno",
-        card: "4874070058384718",
-        fee: 0.11
-    };
-
-    let user = { email: "", id: "TN-" + Math.floor(100000 + Math.random()*800000) };
-
-    function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
-
-    function onSignIn(resp) {
-        const payload = JSON.parse(atob(resp.credential.split('.')[1]));
-        user.email = payload.email;
-        document.getElementById('login-msg').style.display = 'none';
-        document.getElementById('start-btn').disabled = false;
-        document.getElementById('user-info').style.display = 'block';
-        document.getElementById('my-id').innerText = user.id;
-        if(user.email === CONFIG.admin) document.getElementById('admin-panel').style.display = 'block';
-    }
-
-    function openStep(s) {
-        document.getElementById('start-btn').style.display = 'none';
-        ['step-id', 'step-deal', 'step-pay'].forEach(id => document.getElementById(id).style.display = 'none');
-        if(s===1) document.getElementById('step-id').style.display = 'block';
-        if(s===2) document.getElementById('step-deal').style.display = 'block';
-        if(s===3) {
-            window.targetPrice = document.getElementById('price').value;
-            document.getElementById('step-pay').style.display = 'block';
-            document.getElementById('final-sum').innerText = window.targetPrice + " " + document.getElementById('currency').value;
-        }
-    }
-
-    async function startVerification() {
-        document.getElementById('status').innerText = "Очікування банківського підтвердження...";
-        setInterval(async () => {
-            try {
-                const res = await fetch(`https://api.monobank.ua/personal/statement/0/${Math.floor(Date.now()/1000)-300}`, {
-                    headers: {'X-Token': CONFIG.token}
-                });
-                const data = await res.json();
-                const found = data.find(t => Math.abs(t.amount) === window.targetPrice * 100);
-                if(found) {
-                    document.getElementById('status').innerText = "✅ ДЕПОЗИТ ЗАРАХОВАНО";
-                    if(user.email === CONFIG.admin) {
-                        const prof = window.targetPrice * CONFIG.fee;
-                        document.getElementById('admin-logs').innerHTML += `<div style="padding:5px; border-bottom:1px solid #333;">Дохід: ${prof.toFixed(2)} | На виплату: ${(window.targetPrice-prof).toFixed(2)}</div>`;
-                    }
-                }
-            } catch(e){}
-        }, 8000);
-    }
-
-    // Рандомні відгуки
-    const names = ["Dima", "Alex88", "Katia_M", "CryptoV", "Rich_User"];
-    let revHtml = "";
-    for(let i=0; i<4; i++) {
-        revHtml += `<div class="review-card"><b>${names[i]}</b> ⭐⭐⭐⭐⭐<br>Все пройшло за 10 хвилин. Гроші були в безпеці.</div>`;
-    }
-    document.getElementById('reviews-list').innerHTML = revHtml;
-</script>
+    <script src="config.js"></script>
+    <script>
+        // Тут буде основний скрипт (нижче в поясненні)
+    </script>
 </body>
 </html>
+ 
  
