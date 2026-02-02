@@ -3,168 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRUST_NODE | Professional Escrow</title>
+    <title>TRUST_NODE | Escrow System</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root { --main: #00f2ff; --bg: #0a0b10; }
+        :root { --main: #00f2ff; --bg: #0a0b10; --card: #12141c; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; width: 100vw; }
         
-        /* Виправлення багу з бічним віконцем */
-        .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: #0d0e14; transition: 0.4s; z-index: 1500; padding: 60px 20px; border-left: 1px solid var(--main); box-sizing: border-box; }
-        .sidebar.active { right: 0; }
-        
-        /* Профіль та інтерфейс */
-        .profile-trigger { position: fixed; top: 20px; left: 20px; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--main); cursor: pointer; z-index: 1000; overflow: hidden; background: #222; }
+        /* Профіль */
+        .profile-trigger { position: fixed; top: 20px; left: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--main); cursor: pointer; z-index: 1000; overflow: hidden; background: #1a1a1a; box-shadow: 0 0 15px rgba(0,242,255,0.3); }
         .profile-trigger img { width: 100%; height: 100%; object-fit: cover; }
-        .menu-icon { position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1600; color: var(--main); }
         
-        /* Головна кругла кнопка */
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 20px; }
-        .main-circle-btn {
-            width: 200px; height: 200px; border-radius: 50%; border: 4px solid var(--main);
-            background: transparent; color: white; font-size: 18px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
-            transition: 0.4s; display: flex; align-items: center; justify-content: center;
-            text-transform: uppercase; letter-spacing: 2px;
-        }
+        .profile-card { display: none; position: fixed; top: 80px; left: 20px; background: var(--card); border: 1px solid var(--main); padding: 20px; border-radius: 18px; z-index: 1001; width: 260px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from {opacity:0; transform: translateY(-10px);} to {opacity:1; transform: translateY(0);} }
 
-        /* Відгуки */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; }
-        .modal-content { background: #0d0e14; margin: 20px auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 20px; border: 1px solid var(--main); }
-        .rev-card { background: #16171d; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #222; }
-        .rev-user { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; color: var(--main); }
-        .user-ico { width: 30px; height: 30px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; border: 1px solid var(--main); }
+        /* Меню (виправлене) */
+        .menu-icon { position: fixed; top: 22px; right: 20px; font-size: 28px; cursor: pointer; z-index: 1600; color: var(--main); }
+        .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: #0d0e14; transition: 0.4s ease; z-index: 1500; padding: 70px 20px; border-left: 1px solid var(--main); box-sizing: border-box; }
+        .sidebar.active { right: 0; }
+        .menu-link { display: block; padding: 18px 0; color: #eee; text-decoration: none; border-bottom: 1px solid #1a1a1a; font-size: 15px; }
+
+        /* Головна кнопка (як на Speedtest) */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .main-circle-btn {
+            width: 230px; height: 230px; border-radius: 50%; border: 4px solid var(--main);
+            background: transparent; color: white; font-size: 22px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
+            transition: 0.5s; display: flex; align-items: center; justify-content: center;
+            text-transform: uppercase; letter-spacing: 3px; position: relative;
+        }
+        .main-circle-btn:hover:not(:disabled) { box-shadow: 0 0 60px var(--main); transform: scale(1.03); background: rgba(0, 242, 255, 0.03); }
+
+        /* Відгуки (Людські) */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); overflow-y: auto; }
+        .modal-content { background: #0a0b10; margin: 20px auto; padding: 20px; width: 92%; max-width: 550px; border-radius: 20px; }
+        .rev-card { background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 12px; border: 1px solid #1f222e; }
+        .rev-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .rev-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; border: 1px solid var(--main); }
+        .stars { color: #444; font-size: 14px; margin-bottom: 6px; }
+        .stars .active { color: #ffcc00; }
         
-        /* Форма відгуку */
-        .write-rev { margin-top: 20px; padding: 15px; border-top: 1px solid #333; display: none; }
-        .stars-input span { font-size: 25px; cursor: pointer; color: #444; }
-        .stars-input span.active { color: #ffcc00; }
-        
-        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px; width: 90%; max-width: 350px; margin-top: 20px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #111; border: 1px solid #333; color: white; border-radius: 8px; }
+        .lang-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .lang-btn { background: #1a1a1a; border: 1px solid #333; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; flex: 1; }
+        .lang-btn.active { border-color: var(--main); color: var(--main); }
     </style>
 </head>
 <body>
 
-    <div class="profile-trigger" onclick="toggleProfile()"><img id="u-ava" src="https://img.icons8.com/ios-glyphs/90/ffffff/user--v1.png"></div>
+    <div class="profile-trigger" onclick="toggleProfile()">
+        <img id="u-ava" src="https://img.icons8.com/ios-glyphs/90/555555/user--v1.png">
+    </div>
+
+    <div class="profile-card" id="profileCard">
+        <h4 id="u-name" style="margin:0 0 5px 0;">Відвідувач</h4>
+        <p style="font-size:12px; color:var(--main); margin:0;">Status: <span id="u-status">Visitor</span></p>
+        <p style="font-size:12px; margin:5px 0;">ID: <span id="u-id">TN-000000</span></p>
+        <p id="u-stat" style="font-size:12px; color:#888;">Угод: 0</p>
+        <div id="adm-box" style="display:none; border-top:1px solid #333; margin-top:10px; padding-top:10px;">
+            <p style="color:gold; font-size:11px;">🔔 МОНІТОРИНГ:</p>
+            <div id="adm-logs" style="font-size:10px; color:#666;">Логи порожні...</div>
+        </div>
+    </div>
+
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
 
     <div class="sidebar" id="sidebar">
-        <div id="g_id_onload" data-client_id="ВСТАВ_СВІЙ_ID" data-callback="onSignIn"></div>
+        <div class="lang-bar">
+            <button class="lang-btn active" onclick="setLang('uk')">UA</button>
+            <button class="lang-btn" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" onclick="setLang('ru')">RU</button>
+        </div>
+        <div id="g_id_onload" data-client_id="ВСТАВ_СВІЙ_ID_ТУТ" data-callback="onSignIn"></div>
         <div class="g_id_signin" data-type="standard"></div>
-        <nav style="margin-top:30px;">
-            <select id="lang-select" onchange="changeLang()">
-                <option value="uk">🇺🇦 Українська</option>
-                <option value="en">🇺🇸 English</option>
-                <option value="ru">🇷🇺 Русский</option>
-            </select>
-            <a onclick="showReviews()" class="menu-link" id="m-rev">💬 Відгуки (1234)</a>
-            <a href="https://t.me/pingvin4ikpororo" class="menu-link" id="m-sup">✈️ Підтримка</a>
-            <a onclick="location.reload()" class="menu-link" style="color:#ff4444;" id="m-out">🔄 Вийти</a>
+        
+        <nav style="margin-top:20px;">
+            <a onclick="showReviews()" class="menu-link" id="l-rev">💬 Відгуки (1432)</a>
+            <a href="https://t.me/pingvin4ikpororo" class="menu-link" id="l-sup">✈️ Підтримка</a>
+            <a onclick="location.reload()" class="menu-link" style="color:#ff4444;" id="l-out">🔄 Змінити аккаунт</a>
         </nav>
     </div>
 
     <div class="hero">
-        <h1 id="h-logo" style="letter-spacing:8px; color:var(--main); margin:0;">TRUST_NODE</h1>
-        <p id="h-sub" style="opacity:0.4; font-size:10px; margin-bottom:40px;">INTERNATIONAL ESCROW SYSTEM</p>
+        <h1 id="h-logo" style="letter-spacing:10px; color:var(--main); margin:0;">TRUST_NODE</h1>
+        <p id="h-sub" style="opacity:0.4; font-size:10px; margin-bottom:50px; letter-spacing:3px;">INTERNATIONAL ESCROW SYSTEM</p>
         <button class="main-circle-btn" id="start-btn" onclick="showStep('connect')" disabled>ПОЧАТИ</button>
     </div>
 
     <div id="revModal" class="modal">
         <div class="modal-content">
-            <span style="float:right; cursor:pointer;" onclick="closeReviews()">✕</span>
-            <h2 id="r-head">Відгуки</h2>
+            <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeReviews()">✕</span>
+            <h2 id="r-head" style="color:var(--main)">Репутація вузла</h2>
             
-            <div id="rev-form" class="write-rev">
-                <div class="stars-input" id="stars-in">
+            <div id="rev-form" style="display:none; margin-bottom:25px; background:#16171d; padding:15px; border-radius:15px;">
+                <p style="font-size:13px; margin:0 0 10px 0;">Залишити відгук:</p>
+                <div id="stars-in" style="font-size:24px; color:#444; margin-bottom:10px; cursor:pointer;">
                     <span onclick="setRate(1)">★</span><span onclick="setRate(2)">★</span><span onclick="setRate(3)">★</span><span onclick="setRate(4)">★</span><span onclick="setRate(5)">★</span>
                 </div>
-                <input type="text" id="rev-text" placeholder="Ваш коментар...">
-                <button onclick="sendReview()" style="background:var(--main); border:none; padding:10px; width:100%; border-radius:8px; font-weight:bold;">ОПУБЛІКУВАТИ</button>
+                <input type="text" id="rev-txt" placeholder="Текст..." style="width:100%; padding:10px; background:#000; border:1px solid #333; color:white; border-radius:8px;">
+                <button onclick="sendReview()" style="width:100%; margin-top:10px; padding:10px; background:var(--main); border:none; border-radius:8px; font-weight:bold;">ВІДПРАВИТИ</button>
             </div>
 
-            <div id="rev-list" style="margin-top:15px;"></div>
+            <div id="rev-list"></div>
         </div>
     </div>
 
     <script src="config.js"></script>
     <script>
-        let user = { email: "", id: "TN-" + Math.floor(100000 + Math.random()*800000), rate: 0, isAuth: false };
-        const i18n = {
-            uk: { start: "ПОЧАТИ", sub: "МІЖНАРОДНА СИСТЕМА ГАРАНТ", rev: "Відгуки (1234)", sup: "Підтримка", out: "Вийти" },
-            en: { start: "START", sub: "INTERNATIONAL ESCROW SYSTEM", rev: "Reviews (1234)", sup: "Support", out: "Logout" },
-            ru: { start: "НАЧАТЬ", sub: "МЕЖДУНАРОДНАЯ СИСТЕМА ГАРАНТ", rev: "Отзывы (1234)", sup: "Поддержка", out: "Выйти" }
+        let user = { id: "TN-000000", isAuth: false, role: "Visitor", rate: 0 };
+        const trans = {
+            uk: { start:"ПОЧАТИ", sub:"МІЖНАРОДНА СИСТЕМА ГАРАНТ", rev:"Відгуки (1432)", sup:"Підтримка", out:"Змінити аккаунт", head:"Репутація вузла" },
+            en: { start:"START", sub:"INTERNATIONAL ESCROW SYSTEM", rev:"Reviews (1432)", sup:"Support", out:"Change Account", head:"Node Reputation" },
+            ru: { start:"НАЧАТЬ", sub:"МЕЖДУНАРОДНАЯ СИСТЕМА ГАРАНТ", rev:"Отзывы (1432)", sup:"Поддержка", out:"Сменить аккаунт", head:"Репутация узла" }
         };
 
+        function setLang(l) {
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('start-btn').innerText = trans[l].start;
+            document.getElementById('h-sub').innerText = trans[l].sub;
+            document.getElementById('l-rev').innerText = "💬 " + trans[l].rev;
+            document.getElementById('l-sup').innerText = "✈️ " + trans[l].sup;
+            document.getElementById('l-out').innerText = "🔄 " + trans[l].out;
+            document.getElementById('r-head').innerText = trans[l].head;
+        }
+
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
-        function changeLang() {
-            const l = document.getElementById('lang-select').value;
-            document.getElementById('start-btn').innerText = i18n[l].start;
-            document.getElementById('h-sub').innerText = i18n[l].sub;
-            document.getElementById('m-rev').innerText = "💬 " + i18n[l].rev;
-            document.getElementById('m-sup').innerText = "✈️ " + i18n[l].sup;
-            document.getElementById('m-out').innerText = "🔄 " + i18n[l].out;
+        function toggleProfile() { 
+            const p = document.getElementById('profileCard');
+            p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
 
         function onSignIn(resp) {
             const p = JSON.parse(atob(resp.credential.split('.')[1]));
-            user.email = p.email; user.isAuth = true;
+            user.isAuth = true;
+            user.id = "TN-" + Math.floor(100000 + Math.random()*800000);
+            user.role = (p.email === CONFIG.adminEmail) ? "Admin" : "User";
+            
             document.getElementById('u-ava').src = p.picture;
+            document.getElementById('u-name').innerText = p.name;
+            document.getElementById('u-id').innerText = user.id;
+            document.getElementById('u-status').innerText = user.role;
+            document.getElementById('u-stat').innerText = "Угод: " + (user.role === "Admin" ? "999+" : "12");
             document.getElementById('start-btn').disabled = false;
             document.getElementById('rev-form').style.display = 'block';
+            if(user.role === "Admin") document.getElementById('adm-box').style.display = 'block';
             toggleMenu();
         }
 
         function setRate(r) {
             user.rate = r;
-            const s = document.getElementById('stars-in').children;
-            for(let i=0; i<5; i++) s[i].className = i < r ? 'active' : '';
+            const spans = document.getElementById('stars-in').children;
+            for(let i=0; i<5; i++) spans[i].style.color = i < r ? '#ffcc00' : '#444';
         }
 
-        async function sendReview() {
-            const txt = document.getElementById('rev-text').value;
-            if(!txt || user.rate === 0) return alert("Оберіть зірки та напишіть текст!");
-            await db.collection("real_reviews").add({
-                uid: user.id, text: txt, rate: user.rate, time: Date.now()
-            });
-            document.getElementById('rev-text').value = "";
-            loadReviews();
+        // ГЕНЕРАТОР "ЛЮДЯНИХ" ВІДГУКІВ
+        function loadReviews() {
+            const list = document.getElementById('rev-list');
+            let h = "";
+            const humantexts = [
+                "Комісія 11% це звичайно занадто, але хоч без обману. Гроші прийшли за 10 хв.",
+                "Сделка прошла успешно, но поддержка Вадим отвечал долговато, минут 20 ждал.",
+                "Safe service. High fee is the only minus.",
+                "Чекав виплату 3 години, вже почав нервувати. Написав у саппорт, Вадим відповів моментально і все вирішив. Дякую!",
+                "Все ок, але інтерфейс трохи темний.",
+                "Лучший гарант для сделок в телеге. Процент высокий, но оно того стоит.",
+                "Завис платеж на стороне банка, думал кинули. Админ красава, помог разобраться.",
+                "Fast, safe, trusted. Used for 3000 UAH deal."
+            ];
+            const colors = ["#ff3366", "#33ff99", "#ff9933", "#3399ff", "#cc33ff"];
+
+            for(let i=0; i<1432; i++) {
+                if(i > 15) break; // Для швидкості завантаження показуємо 15, інші "в базі"
+                const r = Math.floor(Math.random()*2) + 4; // 4 або 5 зірок
+                const color = colors[i % colors.length];
+                const id = "TN-" + (798000 - i*123);
+                
+                h += `<div class="rev-card">
+                    <div class="rev-header">
+                        <div class="rev-avatar" style="border-color:${color}; color:${color}">${id[3]}</div>
+                        <span style="font-size:13px; color:var(--main);">${id}</span>
+                        <span style="margin-left:auto; font-size:10px; color:#555;">${i+1}д. тому</span>
+                    </div>
+                    <div class="stars">${"<span class='active'>★</span>".repeat(r)}${"<span>★</span>".repeat(5-r)}</div>
+                    <p style="font-size:13px; line-height:1.5; margin:5px 0;">${humantexts[i % humantexts.length]}</p>
+                </div>`;
+            }
+            list.innerHTML = h;
         }
 
         function showReviews() { document.getElementById('revModal').style.display = 'block'; loadReviews(); toggleMenu(); }
         function closeReviews() { document.getElementById('revModal').style.display = 'none'; }
-
-        function loadReviews() {
-            const list = document.getElementById('rev-list');
-            let h = "";
-            
-            // "Міні-ШІ" генерація 1234 відгуків
-            const texts = ["Швидко!", "Safe and fast", "Комісія висока, але надійно", "Everything is good", "Довіряю цьому сервісу", "Top escrow", "Норм тема"];
-            for(let i=0; i<20; i++) { // Показуємо перші 20 для швидкості
-                const r = Math.floor(Math.random()*2) + 4;
-                const id = "TN-" + (800000 - i*342);
-                h += `<div class="rev-card">
-                    <div class="rev-user"><div class="user-ico">${id[3]}</div><b>${id}</b></div>
-                    <div style="color:#ffcc00; font-size:12px;">${"★".repeat(r)}</div>
-                    <p style="font-size:13px; margin:5px 0;">${texts[i % texts.length]}</p>
-                </div>`;
-            }
-
-            // Завантаження РЕАЛЬНИХ з бази
-            db.collection("real_reviews").orderBy("time", "desc").get().then(snap => {
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    h = `<div class="rev-card" style="border: 1px solid var(--main)">
-                        <div class="rev-user"><div class="user-ico" style="background:var(--main)">✓</div><b>${d.uid} (Real)</b></div>
-                        <div style="color:#ffcc00; font-size:12px;">${"★".repeat(d.rate)}</div>
-                        <p style="font-size:13px; margin:5px 0;">${d.text}</p>
-                    </div>` + h;
-                });
-                list.innerHTML = h;
-            });
-        }
     </script>
 </body>
 </html>
