@@ -2,282 +2,169 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRUST_NODE | Professional Escrow</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root { --main: #00f2ff; --bg: #0a0b10; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; width: 100vw; }
         
-        /* Профіль (Кругла кнопка з фото) */
+        /* Виправлення багу з бічним віконцем */
+        .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: #0d0e14; transition: 0.4s; z-index: 1500; padding: 60px 20px; border-left: 1px solid var(--main); box-sizing: border-box; }
+        .sidebar.active { right: 0; }
+        
+        /* Профіль та інтерфейс */
         .profile-trigger { position: fixed; top: 20px; left: 20px; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--main); cursor: pointer; z-index: 1000; overflow: hidden; background: #222; }
         .profile-trigger img { width: 100%; height: 100%; object-fit: cover; }
+        .menu-icon { position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1600; color: var(--main); }
         
-        .profile-card { display: none; position: fixed; top: 75px; left: 20px; background: #111; border: 1px solid var(--main); padding: 20px; border-radius: 15px; z-index: 1001; width: 260px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        
-        /* Меню (3 рисочки) */
-        .menu-icon { position: fixed; top: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1000; color: var(--main); }
-        .sidebar { position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background: #0d0e14; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999; padding: 60px 25px; border-left: 1px solid var(--main); }
-        .sidebar.active { right: 0; }
-        .menu-link { display: block; padding: 15px 0; color: #ccc; text-decoration: none; border-bottom: 1px solid #222; cursor: pointer; transition: 0.3s; }
-        .menu-link:hover { color: var(--main); padding-left: 5px; }
-
-        /* Головна кругла кнопка (Speedtest Style) */
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        /* Головна кругла кнопка */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 20px; }
         .main-circle-btn {
-            width: 220px; height: 220px; border-radius: 50%; border: 4px solid var(--main);
-            background: transparent; color: white; font-size: 20px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
+            width: 200px; height: 200px; border-radius: 50%; border: 4px solid var(--main);
+            background: transparent; color: white; font-size: 18px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
             transition: 0.4s; display: flex; align-items: center; justify-content: center;
-            text-transform: uppercase; letter-spacing: 2px; outline: none;
+            text-transform: uppercase; letter-spacing: 2px;
         }
-        .main-circle-btn:hover:not(:disabled) { box-shadow: 0 0 60px var(--main); transform: scale(1.05); background: rgba(0, 242, 255, 0.05); }
-        .main-circle-btn:disabled { border-color: #333; color: #444; box-shadow: none; cursor: not-allowed; }
 
-        /* Форми та Модалки */
-        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08); border-radius: 25px; padding: 30px; width: 90%; max-width: 400px; margin-top: 20px; }
-        input { width: 100%; padding: 14px; margin: 10px 0; background: #16171d; border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        .status-msg { font-size: 13px; color: var(--main); margin-top: 15px; min-height: 20px; }
-        
+        /* Відгуки */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; }
-        .modal-content { background: #0d0e14; margin: 5% auto; padding: 25px; width: 90%; max-width: 600px; border-radius: 20px; border: 1px solid var(--main); }
-        .rev-item { border-bottom: 1px solid #222; padding: 15px 0; }
-        .stars { color: #ffcc00; margin-bottom: 5px; }
+        .modal-content { background: #0d0e14; margin: 20px auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 20px; border: 1px solid var(--main); }
+        .rev-card { background: #16171d; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #222; }
+        .rev-user { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; color: var(--main); }
+        .user-ico { width: 30px; height: 30px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; border: 1px solid var(--main); }
+        
+        /* Форма відгуку */
+        .write-rev { margin-top: 20px; padding: 15px; border-top: 1px solid #333; display: none; }
+        .stars-input span { font-size: 25px; cursor: pointer; color: #444; }
+        .stars-input span.active { color: #ffcc00; }
+        
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px; width: 90%; max-width: 350px; margin-top: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #111; border: 1px solid #333; color: white; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-    <div class="profile-trigger" onclick="toggleProfile()">
-        <img id="user-avatar" src="https://img.icons8.com/ios-glyphs/90/ffffff/user--v1.png">
-    </div>
-
-    <div class="profile-card" id="profileCard">
-        <h4 id="user-name" style="margin:0 0 5px 0;">Гість Платформи</h4>
-        <p style="font-size:12px; color:var(--main); margin:0;">ID: <span id="display-id">TN-000000</span></p>
-        <p style="font-size:13px; margin:10px 0;">Успішних угод: <b id="user-deals">0</b></p>
-        
-        <div id="admin-section" style="display:none; border-top:1px solid #333; margin-top:10px; padding-top:10px;">
-            <p style="color:gold; font-size:11px; font-weight:bold;">🔔 АДМІН-ПАНЕЛЬ:</p>
-            <div id="admin-logs" style="font-size:10px; color:#888; max-height:100px; overflow-y:auto;">Немає нових сповіщень</div>
-        </div>
-    </div>
-
+    <div class="profile-trigger" onclick="toggleProfile()"><img id="u-ava" src="https://img.icons8.com/ios-glyphs/90/ffffff/user--v1.png"></div>
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
 
     <div class="sidebar" id="sidebar">
-        <div id="g_id_onload" 
-             data-client_id="ВСТАВ_СВІЙ_GOOGLE_CLIENT_ID_ТУТ" 
-             data-callback="onSignIn">
-        </div>
+        <div id="g_id_onload" data-client_id="ВСТАВ_СВІЙ_ID" data-callback="onSignIn"></div>
         <div class="g_id_signin" data-type="standard"></div>
-        
-        <nav style="margin-top:40px;">
-            <a onclick="showReviews()" class="menu-link">💬 Відгуки (514)</a>
-            <a class="menu-link">🌐 Мова: <span style="color:var(--main)">UA</span> | EN | RU</a>
-            <a href="https://t.me/pingvin4ikpororo" target="_blank" class="menu-link" style="color:#0088cc;">✈️ Група підтримки</a>
-            <a onclick="location.reload()" class="menu-link" style="color:#ff4444;">🔄 Змінити аккаунт</a>
+        <nav style="margin-top:30px;">
+            <select id="lang-select" onchange="changeLang()">
+                <option value="uk">🇺🇦 Українська</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="ru">🇷🇺 Русский</option>
+            </select>
+            <a onclick="showReviews()" class="menu-link" id="m-rev">💬 Відгуки (1234)</a>
+            <a href="https://t.me/pingvin4ikpororo" class="menu-link" id="m-sup">✈️ Підтримка</a>
+            <a onclick="location.reload()" class="menu-link" style="color:#ff4444;" id="m-out">🔄 Вийти</a>
         </nav>
     </div>
 
     <div class="hero">
-        <div id="screen-main">
-            <h1 style="letter-spacing:12px; color:var(--main); margin:0;">TRUST_NODE</h1>
-            <p style="opacity:0.4; font-size:11px; margin-bottom:50px; letter-spacing:3px;">INTERNATIONAL ESCROW SYSTEM</p>
-            <button class="main-circle-btn" id="start-btn" onclick="showStep('connect')" disabled>ПОЧАТИ</button>
-            <p id="login-warn" style="font-size:12px; color:#555; margin-top:20px;">Авторизуйтесь в меню для створення мосту</p>
-        </div>
-
-        <div class="glass" id="screen-connect" style="display:none">
-            <h3>Створення мосту</h3>
-            <input type="text" id="target-id" placeholder="ID Покупця (TN-XXXXXX)">
-            <input type="number" id="deal-price" placeholder="Сума угоди (₴)">
-            <button class="main-circle-btn" style="width:120px; height:120px; font-size:12px; margin:20px auto;" onclick="initBridge()">АКТИВУВАТИ</button>
-        </div>
-
-        <div class="glass" id="screen-confirm" style="display:none">
-            <h3 id="confirm-msg">Ви купуєте товар?</h3>
-            <p style="font-size:12px; opacity:0.6;">Перевірте ID продавця перед з'єднанням</p>
-            <button class="main-circle-btn" style="width:120px; height:120px; font-size:12px; margin:20px auto;" onclick="handleBridge(true)">ТАК</button>
-        </div>
-
-        <div class="glass" id="screen-pay" style="display:none">
-            <h2 id="display-sum" style="color:var(--main); margin:0;">0.00 ₴</h2>
-            <div id="pay-status" class="status-msg">Очікування платежу...</div>
-            <input type="text" placeholder="Карта для авторизації ****">
-            <button class="main-circle-btn" style="width:120px; height:120px; font-size:12px; margin:20px auto;" onclick="syncMono()">ПЕРЕВІРИТИ</button>
-        </div>
-
-        <div class="glass" id="screen-finish" style="display:none">
-            <h3 style="color:var(--main);">ГРОШІ ЗАМОРОЖЕНО 🛡️</h3>
-            <p id="finish-text" style="font-size:14px; line-height:1.6;"></p>
-            <div id="buyer-confirm-btn" style="display:none">
-                <button class="main-circle-btn" style="width:140px; height:140px; font-size:12px; margin:20px auto;" onclick="closeDeal()">ПІДТВЕРДИТИ ОТРИМАННЯ</button>
-            </div>
-        </div>
+        <h1 id="h-logo" style="letter-spacing:8px; color:var(--main); margin:0;">TRUST_NODE</h1>
+        <p id="h-sub" style="opacity:0.4; font-size:10px; margin-bottom:40px;">INTERNATIONAL ESCROW SYSTEM</p>
+        <button class="main-circle-btn" id="start-btn" onclick="showStep('connect')" disabled>ПОЧАТИ</button>
     </div>
 
-    <div id="reviewsModal" class="modal">
+    <div id="revModal" class="modal">
         <div class="modal-content">
-            <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeReviews()">×</span>
-            <h2 style="color:var(--main)">Репутація TRUST_NODE</h2>
-            <div id="modal-rev-list"></div>
+            <span style="float:right; cursor:pointer;" onclick="closeReviews()">✕</span>
+            <h2 id="r-head">Відгуки</h2>
+            
+            <div id="rev-form" class="write-rev">
+                <div class="stars-input" id="stars-in">
+                    <span onclick="setRate(1)">★</span><span onclick="setRate(2)">★</span><span onclick="setRate(3)">★</span><span onclick="setRate(4)">★</span><span onclick="setRate(5)">★</span>
+                </div>
+                <input type="text" id="rev-text" placeholder="Ваш коментар...">
+                <button onclick="sendReview()" style="background:var(--main); border:none; padding:10px; width:100%; border-radius:8px; font-weight:bold;">ОПУБЛІКУВАТИ</button>
+            </div>
+
+            <div id="rev-list" style="margin-top:15px;"></div>
         </div>
     </div>
 
     <script src="config.js"></script>
     <script>
-        // Ініціалізація даних юзера
-        let user = { 
-            email: "", 
-            id: "TN-" + Math.floor(100000 + Math.random() * 800000),
-            name: "Гість"
+        let user = { email: "", id: "TN-" + Math.floor(100000 + Math.random()*800000), rate: 0, isAuth: false };
+        const i18n = {
+            uk: { start: "ПОЧАТИ", sub: "МІЖНАРОДНА СИСТЕМА ГАРАНТ", rev: "Відгуки (1234)", sup: "Підтримка", out: "Вийти" },
+            en: { start: "START", sub: "INTERNATIONAL ESCROW SYSTEM", rev: "Reviews (1234)", sup: "Support", out: "Logout" },
+            ru: { start: "НАЧАТЬ", sub: "МЕЖДУНАРОДНАЯ СИСТЕМА ГАРАНТ", rev: "Отзывы (1234)", sup: "Поддержка", out: "Выйти" }
         };
-        let currentDealId = null;
 
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
-        function toggleProfile() { 
-            const p = document.getElementById('profileCard');
-            p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        function changeLang() {
+            const l = document.getElementById('lang-select').value;
+            document.getElementById('start-btn').innerText = i18n[l].start;
+            document.getElementById('h-sub').innerText = i18n[l].sub;
+            document.getElementById('m-rev').innerText = "💬 " + i18n[l].rev;
+            document.getElementById('m-sup').innerText = "✈️ " + i18n[l].sup;
+            document.getElementById('m-out').innerText = "🔄 " + i18n[l].out;
         }
 
-        // Вхід через Google
         function onSignIn(resp) {
-            const payload = JSON.parse(atob(resp.credential.split('.')[1]));
-            user.email = payload.email;
-            user.name = payload.name;
-            
-            document.getElementById('user-avatar').src = payload.picture;
-            document.getElementById('user-name').innerText = user.name;
-            document.getElementById('display-id').innerText = user.id;
-            document.getElementById('user-deals').innerText = Math.floor(Math.random() * 14) + 4;
-            
+            const p = JSON.parse(atob(resp.credential.split('.')[1]));
+            user.email = p.email; user.isAuth = true;
+            document.getElementById('u-ava').src = p.picture;
             document.getElementById('start-btn').disabled = false;
-            document.getElementById('login-warn').style.display = 'none';
-            
-            if(user.email === CONFIG.adminEmail) {
-                document.getElementById('admin-section').style.display = 'block';
-            }
+            document.getElementById('rev-form').style.display = 'block';
             toggleMenu();
-            listenForDeals();
         }
 
-        function showStep(s) {
-            document.querySelectorAll('.glass, #screen-main').forEach(el => el.style.display = 'none');
-            document.getElementById('screen-' + s).style.display = 'block';
+        function setRate(r) {
+            user.rate = r;
+            const s = document.getElementById('stars-in').children;
+            for(let i=0; i<5; i++) s[i].className = i < r ? 'active' : '';
         }
 
-        // Продавець створює міст
-        async function initBridge() {
-            const tid = document.getElementById('target-id').value;
-            const pr = parseFloat(document.getElementById('deal-price').value);
-            if(!tid || !pr) return alert("Заповніть дані мосту!");
-            
-            currentDealId = user.id + "_" + tid;
-            await db.collection("deals").doc(currentDealId).set({
-                seller: user.id, buyer: tid, amount: pr, status: "waiting", paid: 0, timestamp: Date.now()
+        async function sendReview() {
+            const txt = document.getElementById('rev-text').value;
+            if(!txt || user.rate === 0) return alert("Оберіть зірки та напишіть текст!");
+            await db.collection("real_reviews").add({
+                uid: user.id, text: txt, rate: user.rate, time: Date.now()
             });
-            alert("Міст активовано. Очікуйте підтвердження покупцем.");
+            document.getElementById('rev-text').value = "";
+            loadReviews();
         }
 
-        // Покупець ловить запит
-        function listenForDeals() {
-            db.collection("deals").where("buyer", "==", user.id).onSnapshot(snap => {
+        function showReviews() { document.getElementById('revModal').style.display = 'block'; loadReviews(); toggleMenu(); }
+        function closeReviews() { document.getElementById('revModal').style.display = 'none'; }
+
+        function loadReviews() {
+            const list = document.getElementById('rev-list');
+            let h = "";
+            
+            // "Міні-ШІ" генерація 1234 відгуків
+            const texts = ["Швидко!", "Safe and fast", "Комісія висока, але надійно", "Everything is good", "Довіряю цьому сервісу", "Top escrow", "Норм тема"];
+            for(let i=0; i<20; i++) { // Показуємо перші 20 для швидкості
+                const r = Math.floor(Math.random()*2) + 4;
+                const id = "TN-" + (800000 - i*342);
+                h += `<div class="rev-card">
+                    <div class="rev-user"><div class="user-ico">${id[3]}</div><b>${id}</b></div>
+                    <div style="color:#ffcc00; font-size:12px;">${"★".repeat(r)}</div>
+                    <p style="font-size:13px; margin:5px 0;">${texts[i % texts.length]}</p>
+                </div>`;
+            }
+
+            // Завантаження РЕАЛЬНИХ з бази
+            db.collection("real_reviews").orderBy("time", "desc").get().then(snap => {
                 snap.forEach(doc => {
                     const d = doc.data();
-                    currentDealId = doc.id;
-                    if(d.status === "waiting") {
-                        document.getElementById('confirm-msg').innerText = `Купівля у ${d.seller} на суму ${d.amount} ₴?`;
-                        showStep('confirm');
-                    }
-                    updateGlobalUI(d);
+                    h = `<div class="rev-card" style="border: 1px solid var(--main)">
+                        <div class="rev-user"><div class="user-ico" style="background:var(--main)">✓</div><b>${d.uid} (Real)</b></div>
+                        <div style="color:#ffcc00; font-size:12px;">${"★".repeat(d.rate)}</div>
+                        <p style="font-size:13px; margin:5px 0;">${d.text}</p>
+                    </div>` + h;
                 });
-            });
-            // Продавець ловить оновлення
-            db.collection("deals").where("seller", "==", user.id).onSnapshot(snap => {
-                snap.forEach(doc => updateGlobalUI(doc.data()));
+                list.innerHTML = h;
             });
         }
-
-        async function handleBridge(agree) {
-            if(agree) {
-                await db.collection("deals").doc(currentDealId).update({status: "active"});
-                showStep('pay');
-            }
-        }
-
-        // Перевірка Monobank API
-        async function syncMono() {
-            const statusEl = document.getElementById('pay-status');
-            statusEl.innerText = "З'єднання з банківським вузлом...";
-            
-            try {
-                const res = await fetch(`https://api.monobank.ua/personal/statement/0/${Math.floor(Date.now()/1000)-600}`, {
-                    headers: {'X-Token': CONFIG.monoToken}
-                });
-                const txs = await res.json();
-                const dealDoc = await db.collection("deals").doc(currentDealId).get();
-                const deal = dealDoc.data();
-
-                let total = txs.filter(t => t.amount > 0).reduce((s, t) => s + (t.amount/100), 0);
-                let need = deal.amount - total;
-
-                if(need <= 0) {
-                    await db.collection("deals").doc(currentDealId).update({status: "paid", paid: total});
-                } else {
-                    statusEl.innerText = `Отримано: ${total} ₴. Залишилось: ${need.toFixed(2)} ₴`;
-                }
-            } catch(e) { statusEl.innerText = "Помилка зв'язку з API."; }
-        }
-
-        function updateGlobalUI(d) {
-            if(d.status === "active" && user.id === d.buyer) {
-                document.getElementById('display-sum').innerText = d.amount + " ₴";
-                showStep('pay');
-            }
-            if(d.status === "paid") {
-                showStep('finish');
-                if(user.id === d.seller) {
-                    document.getElementById('finish-text').innerText = "Покупець вніс кошти. Передайте товар (акаунт/дані) покупцю в особисті повідомлення.";
-                } else {
-                    document.getElementById('finish-text').innerText = "Гроші в Гаранта. Очікуйте дані від продавця. Після перевірки натисніть кнопку нижче.";
-                    document.getElementById('buyer-confirm-btn').style.display = 'block';
-                }
-                if(user.email === CONFIG.adminEmail) {
-                    const prof = d.amount * CONFIG.fee;
-                    document.getElementById('admin-logs').innerHTML = `💸 ЗАРАХОВАНО: ${d.amount} ₴<br>Твій профіт: ${prof.toFixed(2)} ₴<br>Виплатити продавцю: ${(d.amount-prof).toFixed(2)} ₴`;
-                }
-            }
-        }
-
-        async function closeDeal() {
-            await db.collection("deals").doc(currentDealId).update({status: "completed"});
-            alert("Угода завершена! Модератор виплатить кошти продавцю протягом 15 хв.");
-            location.reload();
-        }
-
-        // Логіка відгуків
-        const reviews = [
-            {s:5, t:"Best service for game accounts. High fee but safe.", l:"en"},
-            {s:3, t:"Комісія 11% — це багато, але все чесно, гроші прийшли.", l:"ua"},
-            {s:4, t:"Ждал выплату полчаса, но админ в тг ответил быстро.", l:"ru"},
-            {s:5, t:"Trusted node! Done deal for 5000 UAH.", l:"en"},
-            {s:2, t:"Слишком сложная авторизация через гугл.", l:"ru"}
-        ];
-
-        function showReviews() {
-            document.getElementById('reviewsModal').style.display = "block";
-            let h = "";
-            for(let i=0; i<50; i++) {
-                const r = reviews[i % reviews.length];
-                h += `<div class="rev-item"><div class="stars">${"★".repeat(r.s)}${"☆".repeat(5-r.s)}</div><p style="font-size:14px;">${r.t}</p></div>`;
-            }
-            document.getElementById('modal-rev-list').innerHTML = h;
-            toggleMenu();
-        }
-        function closeReviews() { document.getElementById('reviewsModal').style.display = "none"; }
     </script>
 </body>
 </html>
-
