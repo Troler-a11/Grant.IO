@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>TRUST_NODE | Secure Escrow</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root { --main: #00f2ff; --bg: #0a0b10; }
+        body { background: var(--bg); color: white; font-family: sans-serif; text-align: center; }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 15px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); margin: 20px auto; max-width: 500px; }
+        .btn { background: var(--main); color: black; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        .admin-box { border: 2px solid gold; padding: 15px; margin-top: 20px; display: none; text-align: left; }
+        input, select { width: 90%; padding: 10px; margin: 10px 0; background: #1a1b23; border: 1px solid #333; color: white; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <nav style="display:flex; justify-content: space-between; padding: 20px;">
+        <div style="font-weight:bold; color:var(--main)">TRUST_NODE</div>
+        <div id="g_id_onload"
+             data-client_id="ТВІЙ_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+    </nav>
+
+    <div class="glass" id="main-ui">
+        <h2>Створити угоду</h2>
+        <select id="currency">
+            <option value="UAH">Гривня (₴)</option>
+            <option value="USD">Долар ($)</option>
+        </select>
+        <input type="number" id="amount" placeholder="Сума">
+        <button class="btn" onclick="initDeal()">ЗАФІКСУВАТИ УГОДУ</button>
+    </div>
+
+    <div class="glass" id="payment-ui" style="display:none">
+        <h3 id="deal-id-display"></h3>
+        <p>До сплати: <b id="pay-sum"></b></p>
+        <button class="btn" onclick="startCheck()">ПЕРЕВІРИТИ ОПЛАТУ</button>
+        <p id="status" style="color: grey;">Очікування транзакції...</p>
+    </div>
+
+    <div class="glass" id="admin-panel" style="display:none">
+        <h3 style="color:gold">ADMIN VIP PANEL</h3>
+        <div id="admin-logs">Повідомлень немає</div>
+    </div>
+
+<script>
+    const CONFIG = {
+        admin: "ilemberk3356@gmail.com",
+        token: "UDK0o0FIo2-05Cgu5FsYC17_zZU-HITq9VwoWdbReSno",
+        card: "4874070058384718",
+        comm: 0.11
+    };
+
+    let userEmail = "";
+
+    function handleCredentialResponse(response) {
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        userEmail = payload.email;
+        if(userEmail === CONFIG.admin) {
+            document.getElementById('admin-panel').style.display = 'block';
+        }
+        alert("Вхід: " + userEmail);
+    }
+
+    function initDeal() {
+        const amt = document.getElementById('amount').value;
+        if(!amt) return;
+        const id = "TN-" + Math.floor(Math.random()*9000);
+        document.getElementById('main-ui').style.display = 'none';
+        document.getElementById('payment-ui').style.display = 'block';
+        document.getElementById('deal-id-display').innerText = "Угода " + id;
+        document.getElementById('pay-sum').innerText = amt + " " + document.getElementById('currency').value;
+        window.currentDeal = { id, amt };
+    }
+
+    async function startCheck() {
+        document.getElementById('status').innerText = "Синхронізація з банком...";
+        const res = await fetch(`https://api.monobank.ua/personal/statement/0/${Math.floor(Date.now()/1000)-300}`, {
+            headers: {'X-Token': CONFIG.token}
+        });
+        const data = await res.json();
+        const found = data.find(t => Math.abs(t.amount) === window.currentDeal.amt * 100);
+
+        if(found) {
+            document.getElementById('status').innerText = "✅ ОПЛАЧЕНО! Гроші в системі.";
+            if(userEmail === CONFIG.admin) {
+                const profit = window.currentDeal.amt * CONFIG.comm;
+                document.getElementById('admin-logs').innerHTML = `
+                    <div style="background:rgba(0,255,0,0.1); padding:10px;">
+                        <b>Угода ${window.currentDeal.id}</b><br>
+                        Твій профіт: ${profit.toFixed(2)}<br>
+                        Виплата: ${(window.currentDeal.amt - profit).toFixed(2)}<br>
+                        Твоя карта: ${CONFIG.card}
+                    </div>`;
+            }
+        } else {
+            alert("Оплата не знайдена. Перевірте статус у додатку.");
+        }
+    }
+</script>
+</body>
+</html>
