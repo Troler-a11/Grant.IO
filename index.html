@@ -3,58 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRUST_NODE | Secure Bridge</title>
+    <title>TRUST_NODE | Secure Bridge Protocol</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #00f2ff; --bg: #030407; --card: rgba(255, 255, 255, 0.03); --border: rgba(0, 242, 255, 0.15); --text-dim: #666; }
-        * { box-sizing: border-box; outline: none; }
-        html, body { height: 100%; overflow: hidden; position: fixed; width: 100%; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
-        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #0a1a1f 0%, #030407 70%); z-index: -1; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); z-index: 1000; position: relative; }
-        .user-trigger { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); background: url('https://cdn-icons-png.flaticon.com/512/149/149071.png') center/cover; }
-        
-        /* Текст над кнопкою */
-        .changing-text { height: 20px; color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 15px; font-family: 'JetBrains Mono'; transition: 0.5s; }
-        
-        .main-btn { width: 210px; height: 210px; border-radius: 50%; border: 2px solid var(--accent); background: transparent; color: white; font-size: 24px; font-weight: 800; cursor: pointer; transition: 0.5s; box-shadow: 0 0 40px rgba(0,242,255,0.1); }
-        .main-btn:disabled { border-color: #222; color: #333; }
+        :root {
+            --accent: #00f2ff;
+            --bg: #030407;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(0, 242, 255, 0.15);
+            --text-dim: #666;
+        }
 
-        /* Sidebar */
-        .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #08090a; border-left: 1px solid var(--border); z-index: 1500; transition: 0.4s; padding: 60px 20px; display: flex; flex-direction: column; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        html, body { 
+            height: 100%; overflow: hidden; position: fixed; width: 100%;
+            background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; 
+        }
+
+        .bg-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% -20%, #0a1a1f 0%, #030407 70%); z-index: -1;
+        }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px); z-index: 1000; position: relative;
+        }
+
+        .user-trigger {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent);
+            background: url('https://cdn-icons-png.flaticon.com/512/149/149071.png') center/cover; cursor: pointer;
+        }
+
+        .logo { font-size: 16px; font-weight: 800; letter-spacing: 2px; }
+        .logo span { color: var(--accent); }
+
+        .profile-card {
+            display: none; position: absolute; top: 70px; left: 15px;
+            width: 260px; background: #0d0f14; border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .status-tag { 
+            font-size: 10px; padding: 3px 8px; border-radius: 4px; 
+            background: rgba(0,242,255,0.1); color: var(--accent); margin: 8px 0; display: inline-block;
+        }
+
+        .changing-text {
+            height: 20px; color: var(--accent); font-size: 13px; font-weight: 600;
+            margin-bottom: 15px; font-family: 'JetBrains Mono'; transition: 0.5s; opacity: 1;
+        }
+
+        .main-btn {
+            width: 210px; height: 210px; border-radius: 50%; border: 2px solid var(--accent);
+            background: transparent; color: white; font-size: 24px; font-weight: 800;
+            cursor: pointer; transition: 0.5s; box-shadow: 0 0 40px rgba(0,242,255,0.1);
+            position: relative;
+        }
+        .main-btn:disabled { border-color: #222; color: #333; cursor: not-allowed; box-shadow: none; }
+
+        .sidebar {
+            position: fixed; top: 0; right: -300px; width: 280px; height: 100%;
+            background: #08090a; border-left: 1px solid var(--border);
+            z-index: 1500; transition: 0.4s cubic-bezier(0.7, 0, 0.3, 1);
+            padding: 60px 20px; display: flex; flex-direction: column;
+        }
         .sidebar.active { right: 0; }
-        .side-link { display: block; color: white; text-decoration: none; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 15px; cursor: pointer; }
-        
-        .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(0,255,100,0.1); color: #00ff66; margin-left: 10px; }
+        .side-link {
+            display: block; color: white; text-decoration: none; padding: 18px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 15px; cursor: pointer;
+        }
+
+        .support-box {
+            margin-top: auto; padding: 15px; background: rgba(36, 161, 222, 0.1);
+            border-radius: 12px; border: 1px solid rgba(36, 161, 222, 0.2);
+        }
+
+        .rev-overlay {
+            display: none; position: fixed; inset: 0; background: var(--bg);
+            z-index: 2500; overflow-y: auto; padding: 20px;
+        }
+        .rev-item {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 18px; border-radius: 14px; margin-bottom: 12px;
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        .escrow-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(3,4,7,0.99);
+            z-index: 3000; padding: 20px; overflow-y: auto;
+        }
+        .escrow-card {
+            max-width: 420px; margin: 40px auto; background: #0d0f14;
+            border: 1px solid var(--border); border-radius: 24px; padding: 35px;
+            box-shadow: 0 0 60px rgba(0, 242, 255, 0.07); text-align: center;
+        }
+
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
+    
     <header>
         <div class="user-trigger" onclick="toggleProfile()"></div>
         <div class="logo">TRUST_NODE<span>.IO</span></div>
         <div class="burger" onclick="toggleSidebar()" style="color:var(--accent); cursor:pointer; font-size:26px;">☰</div>
     </header>
 
+    <div class="profile-card" id="profile-panel">
+        <h3 id="p-name" style="margin:0">Гість</h3>
+        <div class="status-tag" id="p-status">Visitor</div>
+        <div style="font-family:'JetBrains Mono'; font-size:11px; margin-top:10px; color:var(--text-dim)">
+            ID: <span id="p-id">AUTH REQUIRED</span><br>
+            Deals: <span id="p-deals">0</span>
+        </div>
+    </div>
+
     <div class="sidebar" id="sidebar">
         <div style="font-size: 24px; margin-bottom: 30px; cursor: pointer;" onclick="toggleSidebar()">✕</div>
-        <nav>
-            <a class="side-link" onclick="openReviews()" id="ln-rev">Відгуки <span style="color:var(--accent)">(1.5k)</span></a>
-            <a class="side-link" onclick="toggleLang()">Мова: <span id="lang-label" style="color:var(--accent)">UA</span></a>
+        
+        <div id="auth-section">
+            <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 10px;">AUTH GATEWAY</div>
+            <script src="https://accounts.google.com/gsi/client" async defer></script>
+            <div id="g_id_onload" data-client_id="YOUR_ID" data-callback="handleSignIn"></div>
+            <div class="g_id_signin" data-type="standard"></div>
+        </div>
+
+        <nav style="margin-top: 20px;">
+            <a class="side-link" id="ln-rev" onclick="openReviews()">Відгуки <span style="color:var(--accent)">(1.5k)</span></a>
+            <a class="side-link" id="ln-lang" onclick="toggleLang()">Мова: <span style="color:var(--accent)">UA</span></a>
             <a href="https://t.me/pingvin4ikpororo" class="side-link" id="ln-supp" style="color:#24A1DE;">✈️ Підтримка</a>
         </nav>
-        
+
         <div style="margin-top:auto; background:rgba(255,255,255,0.02); padding:15px; border-radius:12px;">
-            <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px;">NETWORK STATUS</div>
-            <div style="font-size:12px; display:flex; align-items:center;">
-                Node Active <span class="status-pill">ONLINE</span>
-            </div>
-            <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">Latency: 24ms</div>
+            <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px;">NODE STATUS</div>
+            <div style="font-size:12px;">Active <span style="color:#00ff66; margin-left:10px;">ONLINE</span></div>
+            <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">Protocol: v2.1.0-secure</div>
         </div>
     </div>
 
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh; text-align:center; padding:20px;">
+        <div id="auth-info" style="color:var(--text-dim); font-size:12px; margin-bottom:20px;">Авторизуйтесь у меню для створення мосту</div>
+        
         <div class="changing-text" id="dynamic-text">Trust_node: best service</div>
+        
         <button class="main-btn" id="start-btn" onclick="openEscrow()" disabled>START</button>
         
         <div style="display:flex; gap:30px; margin-top:50px;">
@@ -63,98 +158,33 @@
             <div><b style="color:var(--accent); display:block; font-size:20px;">$2.4M</b><span style="font-size:10px; color:var(--text-dim)">VOLUME</span></div>
         </div>
     </div>
-        <script>
-        // База текстів для перекладу
-        const uiTrans = {
-            ua: { rev: "Відгуки", supp: "✈️ Підтримка", start: "ПОЧАТИ", deals: "УГОД", days: "ДНІВ", auth: "Авторизуйтесь для створення мосту" },
-            en: { rev: "Reviews", supp: "✈️ Support", start: "START", deals: "DEALS", days: "DAYS", auth: "Authorize to create bridge" },
-            ru: { rev: "Отзывы", supp: "✈️ Поддержка", start: "СТАРТ", deals: "СДЕЛОК", days: "ДНЕЙ", auth: "Авторизуйтесь для моста" }
-        };
 
-        const rawData = [
-            { s: 5, t: { ua: "Все супер, швидко.", en: "Perfect and fast.", ru: "Все отлично, быстро." }},
-            { s: 4, t: { ua: "Норм, але комісія висока.", en: "Good, but high fee.", ru: "Норм, но комиссия кусается." }},
-            { s: 3, t: { ua: "Довго чекав на підтвердження.", en: "Long wait for confirm.", ru: "Долго ждал подтверждения." }},
-            { s: 1, t: { ua: "Жахливо! Підтримка мовчить.", en: "Terrible! No support.", ru: "Ужасно! Саппорт молчит." }},
-            { s: 2, t: { ua: "Поганий інтерфейс.", en: "Bad UI experience.", ru: "Сложный интерфейс." }},
-            { s: 5, t: { ua: "Кращий сервіс для ігор.", en: "Best for gaming.", ru: "Лучший сервис для игр." }},
-            { s: 4, t: { ua: "Все прийшло, дякую.", en: "Received, thanks.", ru: "Все пришло, спасибо." }}
-        ];
+    <div id="rev-modal" class="rev-overlay">
+        <div style="max-width:500px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                <h2 id="rev-title">REVIEWS</h2>
+                <span style="font-size:28px; cursor:pointer;" onclick="closeReviews()">✕</span>
+            </div>
+            <div id="rev-list"></div>
+        </div>
+    </div>
 
-        function toggleLang() {
-            const langs = ['ua', 'en', 'ru'];
-            let idx = langs.indexOf(currentLang);
-            currentLang = langs[(idx + 1) % langs.length];
-            
-            document.getElementById('lang-label').innerText = currentLang.toUpperCase();
-            const t = uiTrans[currentLang];
-            document.getElementById('ln-rev').innerHTML = `${t.rev} <span style="color:var(--accent)">(1.5k)</span>`;
-            document.getElementById('ln-supp').innerText = t.supp;
-            document.getElementById('start-btn').innerText = t.start;
-            document.getElementById('stat-deals').innerText = t.deals;
-            document.getElementById('stat-days').innerText = t.days;
-            document.getElementById('auth-info').innerText = t.auth;
-            
-            if(document.getElementById('rev-modal').style.display === 'block') buildReviews();
-        }
-
-        function buildReviews() {
-            const list = document.getElementById('rev-list');
-            let reviews = [];
-            
-            // Математика зірок за твоїм запитом (разом 222)
-            const counts = { 5: 90, 4: 90, 3: 20, 2: 10, 1: 12 };
-            
-            Object.keys(counts).forEach(star => {
-                for(let i = 0; i < counts[star]; i++) {
-                    let sample = rawData.find(d => d.s == star) || rawData[0];
-                    reviews.push({ s: star, t: sample.t[currentLang] });
-                }
-            });
-
-            // Перемішуємо
-            reviews.sort(() => Math.random() - 0.5);
-
-            let html = "";
-            reviews.forEach((r, i) => {
-                let timeText;
-                if(i < 5) timeText = (i + 2) + "h ago"; 
-                else timeText = (Math.floor(i/4) + 1) + "d ago";
-
-                html += `
-                <div style="background:var(--card); border:1px solid var(--border); padding:15px; border-radius:12px; margin-bottom:10px; animation: slideUp 0.3s ease forwards;">
-                    <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-dim);">
-                        <span style="font-family:'JetBrains Mono'">TN-${Math.floor(100000+Math.random()*899999)}</span>
-                        <span>${timeText}</span>
-                    </div>
-                    <div style="color:#ffcc00; margin:5px 0; letter-spacing:2px;">${"★".repeat(r.s)}${"☆".repeat(5-r.s)}</div>
-                    <div style="font-size:13px; line-height:1.4;">${r.t}</div>
-                </div>`;
-            });
-            list.innerHTML = html;
-        }
-    </script>
-        <div id="escrow-modal" style="display:none; position:fixed; inset:0; background:rgba(3,4,7,0.98); z-index:3000; padding:20px; overflow-y:auto;">
-        <div style="max-width:420px; margin:40px auto; background:#0d0f14; border:1px solid var(--border); border-radius:24px; padding:35px; text-align:center;">
+    <div id="escrow-modal" class="escrow-overlay">
+        <div class="escrow-card">
             <div id="escrow-step-1">
                 <div style="font-size:10px; color:var(--accent); letter-spacing:2px; margin-bottom:20px;">PHASE 01: CONNECTION</div>
                 <h2>Створення мосту</h2>
-                <input type="text" id="partner-id" placeholder="ID Продавця (TN-XXXXXX)" style="width:100%; background:#05060a; border:1px solid #1a1c22; padding:18px; border-radius:14px; color:white; margin:20px 0; font-family:'JetBrains Mono'; outline:none;">
+                <input type="text" id="partner-id" placeholder="ID (TN-XXXXXX)" style="width:100%; background:#05060a; border:1px solid #1a1c22; padding:18px; border-radius:14px; color:white; margin:20px 0; font-family:'JetBrains Mono'; outline:none;">
                 <button class="main-btn" style="width:100%; height:60px; border-radius:15px; font-size:16px;" onclick="startBridge()">ВСТАНОВИТИ ЗВ'ЯЗОК</button>
             </div>
-
             <div id="escrow-loader" style="display:none; padding:40px 0;">
-                <div class="radar" style="width:60px; height:60px; border:2px solid var(--accent); border-radius:50%; margin:0 auto 20px; animation: pulse 1.5s infinite;"></div>
-                <div id="escrow-status" style="font-family:'JetBrains Mono'; font-size:12px;">ШИФРУВАННЯ...</div>
+                <div style="width:60px; height:60px; border:2px solid var(--accent); border-radius:50%; margin:0 auto 20px; animation: pulse 1.5s infinite;"></div>
+                <div id="escrow-status" style="font-family:'JetBrains Mono'; font-size:12px;">ENCRYPTING...</div>
             </div>
-
             <div id="escrow-pay" style="display:none; text-align:left;">
                 <div style="font-size:10px; color:var(--accent); margin-bottom:15px;">PHASE 02: DEPOSIT</div>
-                <div style="font-size:12px; color:var(--text-dim);">СУМА ДЕПОЗИТУ:</div>
+                <div style="font-size:12px; color:var(--text-dim);">СУМА:</div>
                 <div style="font-size:42px; font-weight:800; color:var(--accent); margin:10px 0;" id="final-price">--.-- UAH</div>
-                <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:12px; font-size:11px; color:#888; margin-bottom:20px;">
-                    🛡️ Кошти будуть заморожені до підтвердження транзакції обома сторонами.
-                </div>
                 <button class="main-btn" style="width:100%; height:60px; border-radius:15px; font-size:16px; background:var(--accent); color:black;" onclick="location.href='https://t.me/pingvin4ikpororo'">ОПЛАТИТИ</button>
             </div>
             <div style="margin-top:25px; color:#444; cursor:pointer; font-size:12px;" onclick="closeEscrow()">СКАСУВАТИ</div>
@@ -165,57 +195,124 @@
         let isAuth = false;
         let currentLang = 'ua';
         let customPrice = null;
+        const uiTrans = {
+            ua: { rev: "Відгуки", supp: "✈️ Підтримка", start: "ПОЧАТИ", deals: "УГОД", days: "ДНІВ", auth: "Авторизуйтесь для створення мосту", lang: "Мова: UA" },
+            en: { rev: "Reviews", supp: "✈️ Support", start: "START", deals: "DEALS", days: "DAYS", auth: "Authorize to create bridge", lang: "Lang: EN" },
+            ru: { rev: "Отзывы", supp: "✈️ Поддержка", start: "СТАРТ", deals: "СДЕЛОК", days: "ДНЕЙ", auth: "Авторизуйтесь для моста", lang: "Язык: RU" }
+        };
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
-        
-        function openEscrow() {
-            if(!isAuth) return alert(uiTrans[currentLang].auth);
-            document.getElementById('escrow-modal').style.display = 'block';
+        const dynamicTexts = ["Trust_node: best service", "15k+ Successful deals", "Secure Bridge v2.1", "24/7 Support active"];
+        let textIdx = 0;
+
+        // 1. Анімація тексту над кнопкою (кожні 3 сек)
+        setInterval(() => {
+            const el = document.getElementById('dynamic-text');
+            el.style.opacity = 0;
+            setTimeout(() => {
+                textIdx = (textIdx + 1) % dynamicTexts.length;
+                el.innerText = dynamicTexts[textIdx];
+                el.style.opacity = 1;
+            }, 500);
+        }, 3000);
+
+        // 2. Лічильник днів від сьогодні (3 лютого 2026)
+        function initDays() {
+            const start = new Date('2026-02-03');
+            const diff = Math.floor((new Date() - start) / (1000*60*60*24));
+            document.getElementById('days-count').innerText = 379 + diff;
+        }
+        initDays();
+
+        // 3. Система перемикання 3 мов
+        function toggleLang() {
+            const langs = ['ua', 'en', 'ru'];
+            currentLang = langs[(langs.indexOf(currentLang) + 1) % 3];
+            const t = uiTrans[currentLang];
+            document.getElementById('ln-rev').innerHTML = `${t.rev} <span style="color:var(--accent)">(1.5k)</span>`;
+            document.getElementById('ln-lang').innerText = t.lang;
+            document.getElementById('ln-supp').innerText = t.supp;
+            document.getElementById('start-btn').innerText = t.start;
+            document.getElementById('stat-deals').innerText = t.deals;
+            document.getElementById('stat-days').innerText = t.days;
+            document.getElementById('auth-info').innerText = t.auth;
+            if(document.getElementById('rev-modal').style.display === 'block') buildReviews();
         }
 
-        function closeEscrow() { document.getElementById('escrow-modal').style.display = 'none'; }
+        // 4. База 222 відгуків (брудний реалізм)
+        const rawReviews = [
+            { s: 5, t: { ua: "Все гуд, депонував 4к.", en: "Perfect bridge.", ru: "Все ок, быстро." }},
+            { s: 4, t: { ua: "Норм, але довго чекав.", en: "Good but slow.", ru: "Долго ждал, но пришло." }},
+            { s: 3, t: { ua: "Підтримка тупить.", en: "Support is slow.", ru: "Саппорт тормозит." }},
+            { s: 1, t: { ua: "СКАМ! Жарт, все ок.", en: "Scam? No, real.", ru: "Думал скам, но нет." }},
+            { s: 5, t: { ua: "Швидко і надійно.", en: "Fast and safe.", ru: "Быстро и надежно." }},
+            { s: 4, t: { ua: "Комісія велика.", en: "High fee.", ru: "Комиссия высокая." }},
+            { s: 1, t: { ua: "Не подобається дизайн.", en: "Bad design.", ru: "Дизайн не очень." }},
+            { s: 2, t: { ua: "Чекав годину виплату.", en: "Waited 1h.", ru: "Ждал час." }}
+        ];
 
+        function buildReviews() {
+            const counts = { 5: 90, 4: 90, 3: 20, 2: 10, 1: 12 };
+            let pool = [];
+            Object.keys(counts).forEach(s => {
+                for(let i=0; i<counts[s]; i++) {
+                    let r = rawReviews.find(x => x.s == s) || rawReviews[0];
+                    pool.push({ s: s, t: r.t[currentLang] });
+                }
+            });
+            pool.sort(() => Math.random() - 0.5);
+            let html = "";
+            pool.forEach((r, i) => {
+                let time = i < 5 ? (i+2)+"h ago" : (Math.floor(i/4)+1)+"d ago";
+                html += `<div class="rev-item">
+                    <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-dim);">
+                        <span>TN-${Math.floor(100000+Math.random()*899999)}</span><span>${time}</span>
+                    </div>
+                    <div style="color:#ffcc00; margin:5px 0;">${"★".repeat(r.s)}${"☆".repeat(5-r.s)}</div>
+                    <div style="font-size:13px;">${r.t}</div>
+                </div>`;
+            });
+            document.getElementById('rev-list').innerHTML = html;
+        }
+
+        // 5. Ескроу Логіка
+        function openEscrow() { if(isAuth) document.getElementById('escrow-modal').style.display = 'block'; else alert(uiTrans[currentLang].auth); }
+        function closeEscrow() { document.getElementById('escrow-modal').style.display = 'none'; }
         function startBridge() {
-            const id = document.getElementById('partner-id').value;
-            if(id.length < 5) return alert("Невірний ID");
-            
+            if(!document.getElementById('partner-id').value) return;
             document.getElementById('escrow-step-1').style.display = 'none';
             document.getElementById('escrow-loader').style.display = 'block';
-            
             let steps = ["SYNCING...", "HANDSHAKE...", "ENCRYPTING...", "ACTIVE"];
             let i = 0;
             let interval = setInterval(() => {
                 document.getElementById('escrow-status').innerText = steps[i];
-                if(++i >= steps.length) {
-                    clearInterval(interval);
-                    showPayment();
-                }
+                if(++i >= steps.length) { clearInterval(interval); showPay(); }
             }, 800);
         }
-
-        function showPayment() {
+        function showPay() {
             document.getElementById('escrow-loader').style.display = 'none';
             document.getElementById('escrow-pay').style.display = 'block';
-            const price = customPrice || (Math.floor(Math.random() * 8000) + 500);
+            const price = customPrice || (Math.floor(Math.random()*5000)+1000);
             document.getElementById('final-price').innerText = price.toLocaleString() + " UAH";
         }
 
-        function handleSignIn(response) {
-            isAuth = true;
-            document.getElementById('start-btn').disabled = false;
-            document.getElementById('auth-section').style.display = 'none';
-            alert("Success: Node Authorized");
+        // 6. Додаткові функції
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function openReviews() { document.getElementById('rev-modal').style.display = 'block'; buildReviews(); }
+        function closeReviews() { document.getElementById('rev-modal').style.display = 'none'; }
+        function handleSignIn() { 
+            isAuth = true; document.getElementById('start-btn').disabled = false; 
+            document.getElementById('auth-info').innerText = "Node connection ready";
+            document.getElementById('p-id').innerText = "TN-882144";
             toggleSidebar();
         }
+        function toggleProfile() { 
+            const p = document.getElementById('profile-panel');
+            p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+        }
+        window.setPrice = (v) => { customPrice = v; };
 
-        // Функція для тебе в консолі: setPrice(5000)
-        window.setPrice = (v) => { customPrice = v; console.log("Ціна змінена на " + v); };
-
-        console.log("SYSTEM READY. Days online: " + document.getElementById('days-count').innerText);
+        // Авто-авторизація для тестів (прибрати в продакшні)
+        setTimeout(() => { if(!isAuth) handleSignIn(); }, 5000);
     </script>
-
-    <style>
-        @keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-
+</body>
+</html>
