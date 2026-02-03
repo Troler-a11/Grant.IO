@@ -8,25 +8,43 @@
     <style>
         :root { --main: #00f2ff; --bg: #0a0b10; --card: #12141c; --gray: #888; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
+        
+        /* UI Headers */
         .header-ui { position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 20px; box-sizing: border-box; z-index: 1000; }
         .user-trigger { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--main); overflow: hidden; cursor: pointer; background: #1a1a1a; }
         .user-trigger img { width: 100%; height: 100%; object-fit: cover; }
         .burger { font-size: 30px; color: var(--main); cursor: pointer; }
-        .profile-panel { display: none; position: fixed; top: 75px; left: 20px; background: var(--card); border: 1px solid var(--main); border-radius: 15px; padding: 15px; width: 250px; z-index: 1001; }
-        .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: #0d0e14; transition: 0.4s; z-index: 1500; padding: 60px 20px; border-left: 1px solid var(--main); }
+
+        /* Panels */
+        .profile-panel { display: none; position: fixed; top: 75px; left: 20px; background: var(--card); border: 1px solid var(--main); border-radius: 15px; padding: 15px; width: 250px; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .sidebar { position: fixed; top: 0; right: -100%; width: 280px; height: 100%; background: #0d0e14; transition: 0.4s; z-index: 1500; padding: 60px 20px; border-left: 1px solid var(--main); box-sizing: border-box; }
         .sidebar.active { right: 0; }
+
+        /* Hero Section */
         .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        .days-counter { font-size: 11px; color: var(--main); letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
-        .main-btn { width: 220px; height: 220px; border-radius: 50%; border: 3px solid var(--main); background: transparent; color: white; font-size: 24px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 30px rgba(0,242,255,0.1); }
+        .status-msg { font-size: 11px; color: var(--main); letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; transition: 0.5s; height: 15px; }
+        .main-btn { width: 220px; height: 220px; border-radius: 50%; border: 3px solid var(--main); background: transparent; color: white; font-size: 24px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 30px rgba(0,242,255,0.1); display: flex; align-items: center; justify-content: center; }
+        .main-btn:active { transform: scale(0.95); box-shadow: 0 0 50px var(--main); }
+
+        /* Stats */
+        .stat-row { margin-top: 40px; display: flex; gap: 30px; }
+        .stat-item { text-align: center; }
+        .stat-item b { font-size: 18px; display: block; }
+        .stat-item small { color: var(--gray); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Modals */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 2000; overflow-y: auto; }
-        .modal-content { max-width: 500px; margin: 20px auto; padding: 15px; border-radius: 20px; }
-        .rev-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--main); }
+        .modal-content { max-width: 500px; margin: 20px auto; padding: 20px; border-radius: 20px; position: relative; }
+        .rev-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--main); text-align: left; }
         .rev-name { font-weight: bold; color: var(--main); font-size: 14px; }
         .rev-meta { font-size: 10px; color: var(--gray); float: right; }
+
+        /* Forms */
         .add-rev-form { background: #16171d; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; }
-        .add-rev-form textarea { width: 100%; background: #0a0b10; border: 1px solid #333; color: white; padding: 10px; margin-top: 10px; border-radius: 5px; box-sizing: border-box; resize: none; }
-        .submit-btn { background: var(--main); color: black; border: none; padding: 12px; width: 100%; margin-top: 10px; font-weight: bold; cursor: pointer; border-radius: 8px; }
-        input { width: 100%; background: #16171d; border: 1px solid #333; color: white; padding: 12px; margin: 10px 0; border-radius: 8px; box-sizing: border-box; }
+        textarea, input { width: 100%; background: #0a0b10; border: 1px solid #333; color: white; padding: 12px; margin-top: 10px; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .submit-btn { background: var(--main); color: black; border: none; padding: 14px; width: 100%; margin-top: 10px; font-weight: bold; cursor: pointer; border-radius: 8px; }
+        
+        .close-btn { position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer; color: var(--gray); }
     </style>
 </head>
 <body>
@@ -40,189 +58,182 @@
         <b id="ui-name">Відвідувач</b><br>
         <small id="ui-status" style="color:var(--main)">Статус: Visitor</small><br>
         <small id="ui-id">ID: TN-000000</small><hr style="border:0; border-top:1px solid #222; margin:10px 0;">
-        <div id="g_id_onload" data-client_id="YOUR_ID" data-callback="handleAuth"></div>
+        <div id="g_id_onload" data-client_id="71234567890-example.apps.googleusercontent.com" data-callback="handleAuth"></div>
         <div class="g_id_signin" data-type="standard"></div>
     </div>
 
     <div class="sidebar" id="sidebar">
-        <a href="javascript:void(0)" onclick="openReviews()" style="display:block; color:white; padding:15px 0; text-decoration:none; border-bottom:1px solid #222;">💬 Відгуки (1542+)</a>
-        <a href="https://t.me/pingvin4ikpororo" style="display:block; color:white; padding:15px 0; text-decoration:none;">✈️ Підтримка</a>
+        <a href="javascript:void(0)" onclick="openReviews()" style="display:block; color:white; padding:15px 0; text-decoration:none; border-bottom:1px solid #222;">💬 Відгуки (1542)</a>
+        <a href="https://t.me/pingvin4ikpororo" target="_blank" style="display:block; color:white; padding:15px 0; text-decoration:none;">✈️ Підтримка</a>
     </div>
 
     <div class="hero">
-        <div class="days-counter">Завантаження...</div>
-        <h1 style="letter-spacing:8px; margin:0;">TRUST_NODE</h1>
-        <p id="h-sub" style="color:var(--main); font-size:10px; letter-spacing:4px; margin-bottom:40px;">SECURE ESCROW</p>
-        <button class="main-btn" onclick="openEscrow()">START</button>
-        <div style="margin-top: 40px; display: flex; gap: 25px;">
-            <div><b>15.4k+</b><br><small style="color:var(--gray); font-size:9px;">УГОД</small></div>
-            <div><b>0%</b><br><small style="color:var(--gray); font-size:9px;">СКАМУ</small></div>
-            <div><b>$2.4M</b><br><small style="color:var(--gray); font-size:9px;">ОБОРОТ</small></div>
+        <div class="status-msg" id="h-sub">P2P BRIDGE: ONLINE</div>
+        <h1 style="letter-spacing:8px; margin:0; font-size: 2.8rem;">TRUST_NODE</h1>
+        <p style="color:var(--main); font-size:10px; letter-spacing:4px; margin-bottom:40px;">SECURE ESCROW SYSTEM</p>
+        
+        <div class="main-btn" onclick="openEscrow()">START</div>
+
+        <div class="stat-row">
+            <div class="stat-item"><b>15.4k+</b><small>УГОД</small></div>
+            <div class="stat-item"><b id="active-days">379</b><small>ДНІВ ОНЛАЙН</small></div>
+            <div class="stat-item"><b>$2.4M</b><small>ОБОРОТ</small></div>
         </div>
     </div>
 
     <div id="revModal" class="modal">
         <div class="modal-content">
-            <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeReviews()">✕</span>
-            <div style="text-align:center; margin-bottom:20px;">
-                <div style="font-size:32px; font-weight:bold; color:var(--main);">4.8</div>
-                <div style="color:#ffcc00">★★★★★</div>
-                <small style="color:var(--gray)">Базується на 1500+ відгуках</small>
-            </div>
+            <span class="close-btn" onclick="closeReviews()">×</span>
+            <h2 style="text-align:center; color:var(--main); margin-bottom:5px;">Відгуки</h2>
+            <p style="text-align:center; font-size:12px; color:var(--gray); margin-bottom:20px;">Базується на 1542 транзакціях</p>
+            
             <div class="add-rev-form">
-                <textarea id="new-rev-text" placeholder="Ваш відгук..."></textarea>
+                <textarea id="new-rev-text" placeholder="Опишіть ваш досвід..."></textarea>
                 <button class="submit-btn" onclick="addNewReview()">ОПУБЛІКУВАТИ</button>
             </div>
+            
             <div id="rev-list"></div>
         </div>
     </div>
 
     <div id="escrowModal" class="modal">
         <div class="modal-content" style="border: 1px solid var(--main); margin-top: 50px;">
-            <span style="float:right; cursor:pointer;" onclick="closeEscrow()">✕</span>
+            <span class="close-btn" onclick="closeEscrow()">×</span>
             <h2 style="color:var(--main); text-align:center;">CREATE BRIDGE</h2>
             <input type="number" id="deal-sum" placeholder="Сума угоди ($)">
-            <input type="text" id="seller-id" placeholder="ID Продавця (@tg або TN-
-                <script>
-    // Стан користувача
-    let currentUser = { 
-        isAuth: false, 
-        name: "Відвідувач", 
-        id: "TN-000000", 
-        pic: "https://img.icons8.com/ios-glyphs/90/555555/user--v1.png" 
-    };
+            <input type="text" id="seller-id" placeholder="ID Продавця (@tg або TN-ID)">
+            <div style="font-size:11px; color:var(--gray); background:#0d0e14; padding:15px; border-radius:10px; margin-top:15px; line-height:1.4;">
+                Система автоматично зарезервує кошти. Комісія: <span style="color:var(--main)">3.5%</span>. Передача даних відбудеться після підтвердження оплати.
+            </div>
+            <button class="submit-btn" onclick="processDeal()" id="bridge-btn">АКТИВУВАТИ МІСТ</button>
+        </div>
+    </div>
 
-    // 1. ЛІЧИЛЬНИК ДНІВ (рахує від 20 січня 2025 року)
-    function updateDaysCounter() {
-        const startDate = new Date('2025-01-20');
-        const today = new Date();
-        const diffDays = Math.ceil(Math.abs(today - startDate) / (1000 * 60 * 60 * 24));
-        document.querySelector('.days-counter').innerText = `Працюємо: ${diffDays} днів`;
-    }
+    <script>
+        // Користувач
+        let currentUser = { isAuth: false, name: "Відвідувач", id: "TN-000000", pic: "" };
 
-    // 2. АВТОРИЗАЦІЯ (Google Login + генерація ID)
-    function handleAuth(response) {
-        const payload = JSON.parse(atob(response.credential.split('.')[1]));
-        currentUser = {
-            isAuth: true,
-            name: payload.name,
-            pic: payload.picture,
-            id: "TN-" + Math.floor(100000 + Math.random() * 900000)
-        };
-        document.getElementById('user-ava').src = currentUser.pic;
-        document.getElementById('ui-name').innerText = currentUser.name;
-        document.getElementById('ui-id').innerText = "ID: " + currentUser.id;
-        document.getElementById('ui-status').innerText = "Статус: Professional";
-        document.getElementById('profilePanel').style.display = 'none';
-    }
+        // 1. Ініціалізація статистики
+        function init() {
+            const startDate = new Date('2025-01-20');
+            const diff = Math.ceil(Math.abs(new Date() - startDate) / (1000 * 60 * 60 * 24));
+            document.getElementById('active-days').innerText = diff;
+            generateReviewsBase();
+            startStatusLoop();
+        }
 
-    // 3. УПРАВЛІННЯ ВІКНАМИ (UI)
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
-    function toggleProfile() { 
-        const p = document.getElementById('profilePanel');
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    }
-    function openEscrow() { 
-        if(!currentUser.isAuth) { alert("Будь ласка, авторизуйтесь через Google для створення мосту."); toggleProfile(); return; }
-        document.getElementById('escrowModal').style.display = 'block'; 
-    }
-    function closeEscrow() { document.getElementById('escrowModal').style.display = 'none'; }
-    function closeReviews() { document.getElementById('revModal').style.display = 'none'; }
+        // 2. Google Auth
+        function handleAuth(response) {
+            const p = JSON.parse(atob(response.credential.split('.')[1]));
+            currentUser = { 
+                isAuth: true, 
+                name: p.name, 
+                pic: p.picture, 
+                id: "TN-" + Math.floor(100000 + Math.random() * 900000) 
+            };
+            document.getElementById('user-ava').src = currentUser.pic;
+            document.getElementById('ui-name').innerText = currentUser.name;
+            document.getElementById('ui-id').innerText = "ID: " + currentUser.id;
+            document.getElementById('ui-status').innerText = "Статус: Professional";
+            document.getElementById('profilePanel').style.display = 'none';
+        }
 
-    // 4. ІМІТАЦІЯ СТВОРЕННЯ УГОДИ
-    function processDeal() {
-        const sum = document.getElementById('deal-sum').value;
-        const seller = document.getElementById('seller-id').value;
-        const btn = document.getElementById('bridge-btn');
-        if(!sum || !seller) { alert("Заповніть всі поля!"); return; }
-        
-        btn.innerText = "ГЕНЕРУЄМО ВУЗОЛ...";
-        btn.disabled = true;
-        setTimeout(() => {
-            alert(`Міст активовано!\nСума: $${sum}\nID: TX-${Math.random().toString(36).substr(2, 9).toUpperCase()}\nОчікуйте продавця.`);
-            closeEscrow();
-            btn.innerText = "АКТИВУВАТИ МІСТ";
-            btn.disabled = false;
-        }, 2000);
-    }
+        // 3. Відгуки (222 штуки)
+        const textsPool = [
+            "Акаунт перейшов одразу, вже пішов грати. Все топ!",
+            "Не думав, що в Україні є такий рівень. Все літає!",
+            "Safe and fast. No scam here. Recommended.",
+            "Вадим, ти кращий! Витягнув угоду, все чітко.",
+            "Комісія нормальна, якщо хочеш бути впевненим у результаті.",
+            "Everything is fine. Fast payout and cool interface.",
+            "Продав акк, гроші прийшли за 10 хв. Кайф.",
+            "Trusted node. No more scammers for me. 5 stars!",
+            "Money is in my pocket. Safe and easy process.",
+            "Вже пішов грати на новому акаунті. Все топ!"
+        ];
+        const namesPool = ["Andriy", "Sergey", "Margo", "Alex", "Vadim", "Oleg", "Ivan", "Elena", "Sasha", "Max", "Artem", "Nikita", "Yura", "Vlad"];
+        let baseReviews = [];
 
-    window.onload = updateDaysCounter;
-</script>
-    // 5. БАЗА ТЕКСТІВ (222 унікальні комбінації)
-    const rawTexts = [
-        "Акаунт перейшов одразу, вже пішов грати. Все топ!",
-        "Не думал что в Украине есть такой качественный сайт гарант. Удивлен!",
-        "Safe and fast. No scam here. Highly recommended for everyone.",
-        "Вадим — легенда! Помог перевязать почту, когда продавец затупил.",
-        "Комісія велика, але безпека того варта. Гроші прийшли за 10 хв.",
-        "Все чітко. Купив, перевірив, підтвердив. Профіт!",
-        "Best experience ever. Support is 24/7 and very polite.",
-        "Продал акк, деньги на карте через 10 минут. Респект сервису!",
-        "Трохи лячно було кидати гроші, але холд працює ідеально. Рекомендую.",
-        "Everything is legit. Got my Steam account instantly after payment.",
-        "Нарешті знайшов нормальний сервіс в Україні. Дякую команді!",
-        "Fast payout, no issues with my bank. Already my 5th deal here.",
-        "3 звезды за комиссию, в остальном всё на высшем уровне.",
-        "Купив ключ, все працює. Вадим допоміг з активацією вночі.",
-        "Trusted node for real professional traders. Safe for big deals.",
-        "Вже в лобі з пацанами, акаунт пушка! Продавець не підвів.",
-        "Сделка на 500$ прошла гладко. Холд — это спасение от скама.",
-        "Support is very helpful. Responded at 3 AM and solved the issue.",
-        "Найкращий гарант, працюю тільки через них тепер. Всім раджу.",
-        "Money is safe here. Don't worry about scammers, use Trust Node."
-    ];
+        function generateReviewsBase() {
+            for(let i=0; i<222; i++) {
+                baseReviews.push({
+                    name: namesPool[i % namesPool.length] + (i > 14 ? i : ""),
+                    text: textsPool[i % textsPool.length],
+                    stars: 5,
+                    date: i === 221 ? "1 рік тому" : (Math.floor(i/2) + 1 + "д. тому")
+                });
+            }
+        }
 
-    const namesPool = ["Andriy", "Sergey", "Margo", "Alex", "Vadim", "Oleg", "Ivan", "Elena", "Sasha", "Max", "Artem", "Nikita", "Yura", "Vlad", "Stas", "Oksana", "Rita", "John", "Mike", "Sarah"];
+        function renderReviews() {
+            const list = document.getElementById('rev-list');
+            list.innerHTML = "";
+            baseReviews.forEach(r => {
+                list.innerHTML += `
+                    <div class="rev-item">
+                        <span class="rev-meta">${r.date}</span>
+                        <div class="rev-name">${r.name}</div>
+                        <div style="color:#ffcc00; font-size:10px; margin:3px 0;">★★★★★</div>
+                        <div style="font-size:13px; line-height:1.4;">${r.text}</div>
+                    </div>`;
+            });
+        }
 
-    let baseReviews = [];
+        function addNewReview() {
+            if(!currentUser.isAuth) { alert("Будь ласка, авторизуйтесь через Google!"); return; }
+            const t = document.getElementById('new-rev-text');
+            if(t.value.length < 5) return;
+            baseReviews.unshift({ name: currentUser.name, text: t.value, stars: 5, date: "щойно" });
+            t.value = ""; 
+            renderReviews();
+        }
 
-    // Генерація рівно 222 відгуків (від нових до старих)
-    for(let i = 0; i < 222; i++) {
-        baseReviews.push({
-            name: namesPool[i % namesPool.length] + (i > namesPool.length ? " " + Math.floor(i/10) : ""),
-            text: rawTexts[i % rawTexts.length],
-            stars: i % 15 === 0 ? 4 : 5, 
-            date: i === 221 ? "1 рік тому" : (Math.floor(i/3) + 1 + "д. тому")
-        });
-    }
+        // 4. Логіка статусів
+        function startStatusLoop() {
+            const msgs = ["P2P BRIDGE: ONLINE", "NODES ACTIVE: 14", "SECURE DEALS ONLY", "SAFE FOR GAMERS"];
+            let idx = 0;
+            setInterval(() => {
+                const el = document.getElementById('h-sub');
+                el.style.opacity = 0;
+                setTimeout(() => {
+                    el.innerText = msgs[idx];
+                    el.style.opacity = 1;
+                    idx = (idx + 1) % msgs.length;
+                }, 500);
+            }, 4000);
+        }
 
-    // Рендер списку
-    function renderReviews() {
-        const list = document.getElementById('rev-list');
-        list.innerHTML = "";
-        baseReviews.forEach(r => {
-            list.innerHTML += `
-                <div class="rev-item">
-                    <span class="rev-meta">${r.date}</span>
-                    <div class="rev-name">${r.name}</div>
-                    <div style="color:#ffcc00; font-size:10px; margin:3px 0;">${"★".repeat(r.stars)}<span style="color:#444">${"★".repeat(5-r.stars)}</span></div>
-                    <div style="font-size:13px; line-height:1.4;">${r.text}</div>
-                </div>
-            `;
-        });
-    }
+        // 5. Угода
+        function processDeal() {
+            const sum = document.getElementById('deal-sum').value;
+            const seller = document.getElementById('seller-id').value;
+            if(!sum || !seller) { alert("Заповніть всі поля!"); return; }
+            const btn = document.getElementById('bridge-btn');
+            btn.innerText = "ГЕНЕРУЄМО ВУЗОЛ...";
+            btn.disabled = true;
+            setTimeout(() => {
+                alert(`Успіх! Мережевий міст для $${sum} активовано.\nТранзакція: TX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
+                closeEscrow();
+                btn.innerText = "АКТИВУВАТИ МІСТ";
+                btn.disabled = false;
+            }, 2500);
+        }
 
-    // Публікація нового відгуку
-    function addNewReview() {
-        if(!currentUser.isAuth) { alert("Авторизуйтесь через Google!"); return; }
-        const txtArea = document.getElementById('new-rev-text');
-        if(txtArea.value.length < 5) { alert("Напишіть довший відгук!"); return; }
+        // 6. UI Controls
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function toggleProfile() { 
+            const p = document.getElementById('profilePanel');
+            p.style.display = p.style.display === 'block' ? 'none' : 'block'; 
+        }
+        function openReviews() { document.getElementById('revModal').style.display = 'block'; renderReviews(); toggleSidebar(); }
+        function closeReviews() { document.getElementById('revModal').style.display = 'none'; }
+        function openEscrow() { 
+            if(!currentUser.isAuth) { alert("Потрібна авторизація!"); toggleProfile(); return; }
+            document.getElementById('escrowModal').style.display = 'block'; 
+        }
+        function closeEscrow() { document.getElementById('escrowModal').style.display = 'none'; }
 
-        const myRev = {
-            name: currentUser.name,
-            text: txtArea.value,
-            stars: 5,
-            date: "щойно"
-        };
-
-        baseReviews.unshift(myRev); // Додаємо на початок списку
-        txtArea.value = "";
-        renderReviews();
-    }
-
-    function openReviews() { 
-        document.getElementById('revModal').style.display = 'block'; 
-        renderReviews();
-        toggleSidebar();
-    }
-
+        window.onload = init;
+    </script>
+</body>
+</html>
