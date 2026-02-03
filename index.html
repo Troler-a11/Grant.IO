@@ -3,473 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRUST_NODE | Secure Bridge Protocol</title>
+    <title>TRUST_NODE | Secure Bridge</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --accent: #00f2ff;
-            --bg: #030407;
-            --card: rgba(255, 255, 255, 0.03);
-            --border: rgba(0, 242, 255, 0.15);
-            --text-dim: #666;
-        }
+        :root { --accent: #00f2ff; --bg: #030407; --card: rgba(255, 255, 255, 0.03); --border: rgba(0, 242, 255, 0.15); --text-dim: #666; }
+        * { box-sizing: border-box; outline: none; }
+        html, body { height: 100%; overflow: hidden; position: fixed; width: 100%; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, #0a1a1f 0%, #030407 70%); z-index: -1; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); z-index: 1000; position: relative; }
+        .user-trigger { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); background: url('https://cdn-icons-png.flaticon.com/512/149/149071.png') center/cover; }
+        
+        /* Текст над кнопкою */
+        .changing-text { height: 20px; color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 15px; font-family: 'JetBrains Mono'; transition: 0.5s; }
+        
+        .main-btn { width: 210px; height: 210px; border-radius: 50%; border: 2px solid var(--accent); background: transparent; color: white; font-size: 24px; font-weight: 800; cursor: pointer; transition: 0.5s; box-shadow: 0 0 40px rgba(0,242,255,0.1); }
+        .main-btn:disabled { border-color: #222; color: #333; }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { 
-            height: 100%; overflow: hidden; position: fixed; width: 100%;
-            background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; 
-        }
-
-        .bg-glow {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% -20%, #0a1a1f 0%, #030407 70%); z-index: -1;
-        }
-
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px; border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(20px); z-index: 1000; position: relative;
-        }
-
-        .user-trigger {
-            width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent);
-            background: url('https://cdn-icons-png.flaticon.com/512/149/149071.png') center/cover; cursor: pointer;
-        }
-
-        .logo { font-size: 16px; font-weight: 800; letter-spacing: 2px; }
-        .logo span { color: var(--accent); }
-
-        /* Картка профілю */
-        .profile-card {
-            display: none; position: absolute; top: 70px; left: 15px;
-            width: 260px; background: #0d0f14; border: 1px solid var(--border);
-            border-radius: 16px; padding: 20px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .status-tag { 
-            font-size: 10px; padding: 3px 8px; border-radius: 4px; 
-            background: rgba(0,242,255,0.1); color: var(--accent); margin: 8px 0; display: inline-block;
-        }
-
-        /* Кнопка START */
-        .main-btn {
-            width: 220px; height: 220px; border-radius: 50%; border: 2px solid var(--accent);
-            background: transparent; color: white; font-size: 22px; font-weight: 800;
-            cursor: pointer; transition: 0.5s; box-shadow: 0 0 30px rgba(0,242,255,0.1);
-        }
-        .main-btn:disabled { border-color: #222; color: #333; cursor: not-allowed; box-shadow: none; }
+        /* Sidebar */
+        .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #08090a; border-left: 1px solid var(--border); z-index: 1500; transition: 0.4s; padding: 60px 20px; display: flex; flex-direction: column; }
+        .sidebar.active { right: 0; }
+        .side-link { display: block; color: white; text-decoration: none; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 15px; cursor: pointer; }
+        
+        .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(0,255,100,0.1); color: #00ff66; margin-left: 10px; }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
-    
     <header>
         <div class="user-trigger" onclick="toggleProfile()"></div>
         <div class="logo">TRUST_NODE<span>.IO</span></div>
-        <div class="burger" onclick="toggleSidebar()" style="color:var(--accent); cursor:pointer; font-size:24px;">☰</div>
+        <div class="burger" onclick="toggleSidebar()" style="color:var(--accent); cursor:pointer; font-size:26px;">☰</div>
     </header>
 
-    <div class="profile-card" id="profile-panel">
-        <h3 id="p-name" style="margin:0">Гість</h3>
-        <div class="status-tag" id="p-status">Status: Visitor</div>
-        <div style="font-family:'JetBrains Mono'; font-size:11px; margin-top:10px; color:var(--text-dim)">
-            ID: <span id="p-id">НЕОБХІДНА АВТОРИЗАЦІЯ</span><br>
-            Угод: <span id="p-deals">0</span>
+    <div class="sidebar" id="sidebar">
+        <div style="font-size: 24px; margin-bottom: 30px; cursor: pointer;" onclick="toggleSidebar()">✕</div>
+        <nav>
+            <a class="side-link" onclick="openReviews()" id="ln-rev">Відгуки <span style="color:var(--accent)">(1.5k)</span></a>
+            <a class="side-link" onclick="toggleLang()">Мова: <span id="lang-label" style="color:var(--accent)">UA</span></a>
+            <a href="https://t.me/pingvin4ikpororo" class="side-link" id="ln-supp" style="color:#24A1DE;">✈️ Підтримка</a>
+        </nav>
+        
+        <div style="margin-top:auto; background:rgba(255,255,255,0.02); padding:15px; border-radius:12px;">
+            <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px;">NETWORK STATUS</div>
+            <div style="font-size:12px; display:flex; align-items:center;">
+                Node Active <span class="status-pill">ONLINE</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">Latency: 24ms</div>
         </div>
     </div>
 
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh; text-align:center; padding:20px;">
-        <div id="auth-info" style="color:var(--text-dim); font-size:12px; margin-bottom:20px;">
-            Авторизуйтесь у меню для створення мосту
-        </div>
+        <div class="changing-text" id="dynamic-text">Trust_node: best service</div>
         <button class="main-btn" id="start-btn" onclick="openEscrow()" disabled>START</button>
         
         <div style="display:flex; gap:30px; margin-top:50px;">
-            <div><b style="color:var(--accent); display:block; font-size:20px;">15.4k+</b><span style="font-size:10px; color:var(--text-dim)">УГОД</span></div>
-            <div><b style="color:var(--accent); display:block; font-size:20px;">0%</b><span style="font-size:10px; color:var(--text-dim)">СКАМУ</span></div>
-            <div><b style="color:var(--accent); display:block; font-size:20px;">$2.4M</b><span style="font-size:10px; color:var(--text-dim)">ОБОРОТ</span></div>
+            <div><b style="color:var(--accent); display:block; font-size:20px;">15.4k+</b><span style="font-size:10px; color:var(--text-dim)" id="stat-deals">УГОД</span></div>
+            <div><b style="color:var(--accent); display:block; font-size:20px;" id="days-count">379</b><span style="font-size:10px; color:var(--text-dim)" id="stat-days">ДНІВ</span></div>
+            <div><b style="color:var(--accent); display:block; font-size:20px;">$2.4M</b><span style="font-size:10px; color:var(--text-dim)">VOLUME</span></div>
         </div>
     </div>
-    <style>
-        /* Sidebar */
-        .sidebar {
-            position: fixed; top: 0; right: -300px; width: 280px; height: 100%;
-            background: #050608; border-left: 1px solid var(--border);
-            z-index: 1500; transition: 0.4s cubic-bezier(0.7, 0, 0.3, 1);
-            padding: 60px 20px;
+        <script>
+        // База текстів для перекладу
+        const uiTrans = {
+            ua: { rev: "Відгуки", supp: "✈️ Підтримка", start: "ПОЧАТИ", deals: "УГОД", days: "ДНІВ", auth: "Авторизуйтесь для створення мосту" },
+            en: { rev: "Reviews", supp: "✈️ Support", start: "START", deals: "DEALS", days: "DAYS", auth: "Authorize to create bridge" },
+            ru: { rev: "Отзывы", supp: "✈️ Поддержка", start: "СТАРТ", deals: "СДЕЛОК", days: "ДНЕЙ", auth: "Авторизуйтесь для моста" }
+        };
+
+        const rawData = [
+            { s: 5, t: { ua: "Все супер, швидко.", en: "Perfect and fast.", ru: "Все отлично, быстро." }},
+            { s: 4, t: { ua: "Норм, але комісія висока.", en: "Good, but high fee.", ru: "Норм, но комиссия кусается." }},
+            { s: 3, t: { ua: "Довго чекав на підтвердження.", en: "Long wait for confirm.", ru: "Долго ждал подтверждения." }},
+            { s: 1, t: { ua: "Жахливо! Підтримка мовчить.", en: "Terrible! No support.", ru: "Ужасно! Саппорт молчит." }},
+            { s: 2, t: { ua: "Поганий інтерфейс.", en: "Bad UI experience.", ru: "Сложный интерфейс." }},
+            { s: 5, t: { ua: "Кращий сервіс для ігор.", en: "Best for gaming.", ru: "Лучший сервис для игр." }},
+            { s: 4, t: { ua: "Все прийшло, дякую.", en: "Received, thanks.", ru: "Все пришло, спасибо." }}
+        ];
+
+        function toggleLang() {
+            const langs = ['ua', 'en', 'ru'];
+            let idx = langs.indexOf(currentLang);
+            currentLang = langs[(idx + 1) % langs.length];
+            
+            document.getElementById('lang-label').innerText = currentLang.toUpperCase();
+            const t = uiTrans[currentLang];
+            document.getElementById('ln-rev').innerHTML = `${t.rev} <span style="color:var(--accent)">(1.5k)</span>`;
+            document.getElementById('ln-supp').innerText = t.supp;
+            document.getElementById('start-btn').innerText = t.start;
+            document.getElementById('stat-deals').innerText = t.deals;
+            document.getElementById('stat-days').innerText = t.days;
+            document.getElementById('auth-info').innerText = t.auth;
+            
+            if(document.getElementById('rev-modal').style.display === 'block') buildReviews();
         }
-        .sidebar.active { right: 0; }
-        .side-link {
-            display: block; color: white; text-decoration: none; padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px;
+
+        function buildReviews() {
+            const list = document.getElementById('rev-list');
+            let reviews = [];
+            
+            // Математика зірок за твоїм запитом (разом 222)
+            const counts = { 5: 90, 4: 90, 3: 20, 2: 10, 1: 12 };
+            
+            Object.keys(counts).forEach(star => {
+                for(let i = 0; i < counts[star]; i++) {
+                    let sample = rawData.find(d => d.s == star) || rawData[0];
+                    reviews.push({ s: star, t: sample.t[currentLang] });
+                }
+            });
+
+            // Перемішуємо
+            reviews.sort(() => Math.random() - 0.5);
+
+            let html = "";
+            reviews.forEach((r, i) => {
+                let timeText;
+                if(i < 5) timeText = (i + 2) + "h ago"; 
+                else timeText = (Math.floor(i/4) + 1) + "d ago";
+
+                html += `
+                <div style="background:var(--card); border:1px solid var(--border); padding:15px; border-radius:12px; margin-bottom:10px; animation: slideUp 0.3s ease forwards;">
+                    <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-dim);">
+                        <span style="font-family:'JetBrains Mono'">TN-${Math.floor(100000+Math.random()*899999)}</span>
+                        <span>${timeText}</span>
+                    </div>
+                    <div style="color:#ffcc00; margin:5px 0; letter-spacing:2px;">${"★".repeat(r.s)}${"☆".repeat(5-r.s)}</div>
+                    <div style="font-size:13px; line-height:1.4;">${r.t}</div>
+                </div>`;
+            });
+            list.innerHTML = html;
         }
-        .side-link span { color: var(--accent); font-weight: bold; }
+    </script>
+        <div id="escrow-modal" style="display:none; position:fixed; inset:0; background:rgba(3,4,7,0.98); z-index:3000; padding:20px; overflow-y:auto;">
+        <div style="max-width:420px; margin:40px auto; background:#0d0f14; border:1px solid var(--border); border-radius:24px; padding:35px; text-align:center;">
+            <div id="escrow-step-1">
+                <div style="font-size:10px; color:var(--accent); letter-spacing:2px; margin-bottom:20px;">PHASE 01: CONNECTION</div>
+                <h2>Створення мосту</h2>
+                <input type="text" id="partner-id" placeholder="ID Продавця (TN-XXXXXX)" style="width:100%; background:#05060a; border:1px solid #1a1c22; padding:18px; border-radius:14px; color:white; margin:20px 0; font-family:'JetBrains Mono'; outline:none;">
+                <button class="main-btn" style="width:100%; height:60px; border-radius:15px; font-size:16px;" onclick="startBridge()">ВСТАНОВИТИ ЗВ'ЯЗОК</button>
+            </div>
 
-        /* Google Button Container */
-        #g_id_signin { margin: 20px 0; }
-        
-        /* Support Section */
-        .support-box {
-            margin-top: auto; padding: 15px; background: rgba(36, 161, 222, 0.1);
-            border-radius: 12px; border: 1px solid rgba(36, 161, 222, 0.2);
-        }
-    </style>
+            <div id="escrow-loader" style="display:none; padding:40px 0;">
+                <div class="radar" style="width:60px; height:60px; border:2px solid var(--accent); border-radius:50%; margin:0 auto 20px; animation: pulse 1.5s infinite;"></div>
+                <div id="escrow-status" style="font-family:'JetBrains Mono'; font-size:12px;">ШИФРУВАННЯ...</div>
+            </div>
 
-    <div class="sidebar" id="sidebar">
-        <div style="font-size: 24px; margin-bottom: 30px; cursor: pointer;" onclick="toggleSidebar()">✕</div>
-        
-        <div id="auth-section">
-            <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 10px;">ВХІД У СИСТЕМУ</div>
-            <script src="https://accounts.google.com/gsi/client" async defer></script>
-            <div id="g_id_onload" 
-                 data-client_id="YOUR_GOOGLE_ID" 
-                 data-callback="handleSignIn"></div>
-            <div class="g_id_signin" data-type="standard"></div>
-        </div>
-
-        <nav style="margin-top: 30px;">
-            <a href="#" class="side-link" onclick="openReviews()">Відгуки <span>(1542)</span></a>
-            <a href="#" class="side-link">Категорії транзакцій</a>
-            <a href="#" class="side-link">Мова: <span>UA</span></a>
-        </nav>
-
-        <div class="support-box" style="margin-top: 50px;">
-            <div style="font-size: 11px; color: #24A1DE; margin-bottom: 5px;">ЦІЛОДОБОВА ПІДТРИМКА</div>
-            <a href="https://t.me/pingvin4ikpororo" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:13px;">
-                ✈️ @pingvin4ikpororo
-            </a>
+            <div id="escrow-pay" style="display:none; text-align:left;">
+                <div style="font-size:10px; color:var(--accent); margin-bottom:15px;">PHASE 02: DEPOSIT</div>
+                <div style="font-size:12px; color:var(--text-dim);">СУМА ДЕПОЗИТУ:</div>
+                <div style="font-size:42px; font-weight:800; color:var(--accent); margin:10px 0;" id="final-price">--.-- UAH</div>
+                <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:12px; font-size:11px; color:#888; margin-bottom:20px;">
+                    🛡️ Кошти будуть заморожені до підтвердження транзакції обома сторонами.
+                </div>
+                <button class="main-btn" style="width:100%; height:60px; border-radius:15px; font-size:16px; background:var(--accent); color:black;" onclick="location.href='https://t.me/pingvin4ikpororo'">ОПЛАТИТИ</button>
+            </div>
+            <div style="margin-top:25px; color:#444; cursor:pointer; font-size:12px;" onclick="closeEscrow()">СКАСУВАТИ</div>
         </div>
     </div>
 
     <script>
         let isAuth = false;
-        const ADMIN_EMAIL = "your-email@gmail.com"; // Впиши сюди свій імейл
+        let currentLang = 'ua';
+        let customPrice = null;
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
-        function toggleProfile() { 
-            const p = document.getElementById('profile-panel');
-            p.style.display = (p.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function handleSignIn(response) {
-            const data = JSON.parse(atob(response.credential.split('.')[1]));
-            isAuth = true;
-            
-            // Налаштування профілю
-            document.getElementById('p-name').innerText = data.name;
-            document.getElementById('p-id').innerText = "TN-" + Math.floor(100000 + Math.random() * 900000);
-            document.getElementById('p-deals').innerText = Math.floor(Math.random() * 15) + 3;
-            
-            // Статус Адміна
-            if(data.email === ADMIN_EMAIL) {
-                document.getElementById('p-status').innerText = "Status: Administrator";
-                document.getElementById('p-status').style.background = "rgba(255, 0, 0, 0.1)";
-                document.getElementById('p-status').style.color = "#ff4444";
-            } else {
-                document.getElementById('p-status').innerText = "Status: Client [Verified]";
-            }
-
-            // Активація головної кнопки
-            document.getElementById('start-btn').disabled = false;
-            document.getElementById('auth-info').innerHTML = "Протокол готовий до створення мосту";
-            document.getElementById('auth-section').style.display = "none";
-            
-            toggleSidebar();
-            alert("Авторизація успішна. Вітаємо, " + data.name);
-        }
-
-        // Закриття профілю при кліку мимо
-        window.onclick = function(e) {
-            if (!e.target.closest('.user-trigger') && !e.target.closest('.profile-card')) {
-                document.getElementById('profile-panel').style.display = 'none';
-            }
-        }
-    </script>
-    <style>
-        /* Стиль вікна відгуків */
-        .rev-overlay {
-            display: none; position: fixed; inset: 0; background: var(--bg);
-            z-index: 2500; overflow-y: auto; padding: 20px;
-        }
-        .rev-wrap { max-width: 500px; margin: 0 auto; }
         
-        .rev-item {
-            background: var(--card); border: 1px solid var(--border);
-            padding: 18px; border-radius: 14px; margin-bottom: 12px;
-            animation: slideUp 0.4s ease forwards;
-        }
-        .rev-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; }
-        .rev-id { color: var(--accent); font-family: 'JetBrains Mono'; }
-        .rev-stars { color: #ffcc00; letter-spacing: 2px; margin-bottom: 5px; }
-        
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Поле для нового відгуку */
-        .add-rev {
-            background: #0d0f14; border: 1px solid var(--border);
-            padding: 20px; border-radius: 16px; margin-bottom: 30px;
-        }
-        .star-sel span { font-size: 24px; cursor: pointer; color: #222; transition: 0.2s; }
-        .star-sel span.active { color: #ffcc00; }
-        textarea#rev-text {
-            width: 100%; background: #05060a; border: 1px solid #222; color: white;
-            padding: 12px; border-radius: 10px; margin: 15px 0; outline: none;
-        }
-    </style>
-
-    <div id="rev-modal" class="rev-overlay">
-        <div class="rev-wrap">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
-                <h2 style="margin:0;">REVIEWS (222)</h2>
-                <span style="font-size:28px; cursor:pointer;" onclick="closeReviews()">✕</span>
-            </div>
-
-            <div class="add-rev">
-                <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">ЗАЛИШИТИ ВІДГУК</div>
-                <div class="star-sel" id="star-sel">
-                    <span onclick="setRate(1)">★</span><span onclick="setRate(2)">★</span><span onclick="setRate(3)">★</span><span onclick="setRate(4)">★</span><span onclick="setRate(5)">★</span>
-                </div>
-                <textarea id="rev-text" rows="2" placeholder="Ваш коментар..."></textarea>
-                <button class="main-btn" style="width:100%; height:45px; border-radius:10px; font-size:14px;" onclick="sendRev()">ВІДПРАВИТИ</button>
-            </div>
-
-            <div id="rev-list"></div>
-        </div>
-    </div>
-
-    <script>
-        let myRate = 0;
-        const baseRev = [
-    {t: "Чекал выплату 40 минут, думал скам. Но все пришло, спасибо.", s: 3},
-    {t: "Perfect bridge service. Quick domain transfer.", s: 5},
-    {t: "Кинули на бабки! А нет, это я тупанул, не ту карту ввел. Сорри, 5 звезд!", s: 5},
-    {t: "Комісія кусається, але за безпеку треба платити. Працює чітко.", s: 4},
-    {t: "Scam? No, it's real. Best node I've used this year.", s: 5},
-    {t: "Трохи заплутаний інтерфейс, але гарант свою справу знає.", s: 4},
-    {t: "0 зірок би поставив за очікування підтримки! Гроші отримав, але нерви з'їли.", s: 1},
-    {t: "Все ок.", s: 5},
-    {t: "Долго подтверждали транзакцию, но в целом норм.", s: 3},
-    {t: "Safe and fast.", s: 5},
-    {t: "Уже 10-й раз пользуюсь, полет нормальный.", s: 5},
-    {t: "Support is slow today.", s: 2},
-    {t: "Найкращий сервіс для продажу ігрових акаунтів.", s: 5},
-    {t: "Everything is good.", s: 5},
-    {t: "Мало способов оплаты, добавьте больше крипты.", s: 4},
-    {t: "Fast deal, tnx.", s: 5},
-    {t: "Админ красава, помог разобраться с ID.", s: 5},
-    {t: "Почему так долго??? А, пришло, сорян.", s: 4},
-    {t: "Top escrow.", s: 5},
-    {t: "Довіряю цьому сервісу.", s: 5},
-    {t: "Is this real? Yes, it works.", s: 4},
-    {t: "Комісія висока, але надійно.", s: 4},
-    {t: "Швидко!", s: 5},
-    {t: "Ужас, ждал час! Но деньги выплатили.", s: 3},
-    {t: "Best service 2024.", s: 5},
-    {t: "Не розумів як створити міст, підтримка @pingvin4ikpororo пояснила за 2 хв.", s: 5},
-    {t: "Work.", s: 5},
-    {t: "Приятный дизайн, все понятно.", s: 5},
-    {t: "Good job.", s: 5},
-    {t: "Сделка прошла успешно.", s: 5},
-    {t: "Very slow, but safe.", s: 3},
-    {t: "Дякую за безпеку!", s: 5},
-    {t: "Топ за свої гроші.", s: 5},
-    {t: "Быстро, качественно, надежно.", s: 5},
-    {t: "I was scared but it's fine.", s: 4},
-    {t: "Ок.", s: 4},
-    {t: "Бро, спасибо за помощь в сделке.", s: 5},
-    {t: "Нарешті нормальний гарант без скаму.", s: 5},
-    {t: "Trust node is the best.", s: 5},
-    {t: "Ждал 20 минут. Это много.", s: 2},
-    {t: "Всё гуд.", s: 5},
-    {t: "Nice interface.", s: 5},
-    {t: "Дуже зручно через телефон.", s: 5},
-    {t: "Слишком строгая верификация.", s: 3},
-    {t: "Done.", s: 5},
-    {t: "Супер.", s: 5},
-    {t: "Рекомендую всім.", s: 5},
-    {t: "Easy to use.", s: 5},
-    {t: "Не верил до последнего, но бабки на карте.", s: 5},
-    {t: "Всё честно.", s: 5},
-    {t: "Cool service.", s: 5},
-    {t: "Завжди на зв'язку.", s: 5},
-    {t: "Могло бути і швидше.", s: 3},
-    {t: "Продал скин, деньги получил сразу.", s: 5},
-    {t: "Reliable bridge.", s: 5},
-    {t: "Лучший вариант для обмена.", s: 5},
-    {t: "Everything fine.", s: 5},
-    {t: "Дякую адміну.", s: 5},
-    {t: "Perfecto.", s: 5},
-    {t: "Работаем.", s: 5},
-    {t: "Good escrow, i like it.", s: 4},
-    {t: "Не можу змінити мову відразу, але розібрався.", s: 4},
-    {t: "Great experience.", s: 5},
-    {t: "Чисто і прозоро.", s: 5},
-    {t: "No issues.", s: 5},
-    {t: "Топ.", s: 5},
-    {t: "Сервіс вогонь!", s: 5},
-    {t: "Fast and secure.", s: 5},
-    {t: "От души.", s: 5},
-    {t: "Thanks!", s: 5},
-    {t: "Все на высшем уровне.", s: 5},
-    {t: "Сделали всё за 5 минут.", s: 5},
-    {t: "Просто топ.", s: 5},
-    {t: "Респект.", s: 5},
-    {t: "Лучшие в своем деле.", s: 5},
-    {t: "One of the best bridge services.", s: 5},
-    {t: "Всё работает как часы.", s: 5},
-    {t: "Дуже задоволений.", s: 5},
-    {t: "Safety first.", s: 5},
-    {t: "Кайф.", s: 5},
-    {t: "Нормально.", s: 4},
-    {t: "Сработались.", s: 5},
-    {t: "Excellent.", s: 5},
-    {t: "Без проблем.", s: 5},
-    {t: "Довіряю.", s: 5},
-    {t: "Все прошло гладко.", s: 5},
-    {t: "Really fast.", s: 5},
-    {t: "Порядочный сервис.", s: 5},
-    {t: "Good service.", s: 5},
-    {t: "Быстро и без лишних слов.", s: 5},
-    {t: "Топ за свою безопасность.", s: 5},
-    {t: "Красавцы.", s: 5},
-    {t: "Support helped a lot.", s: 5},
-    {t: "Всё чётко, пацаны.", s: 5},
-    {t: "Nice.", s: 5},
-    {t: "Рекомендую.", s: 5},
-    {t: "Best bridge.", s: 5},
-    {t: "Работает.", s: 5},
-    {t: "Супер гуд.", s: 5},
-    {t: "Finally a good service.", s: 5}
-];
-
-        function setRate(n) {
-            myRate = n;
-            const s = document.getElementById('star-sel').children;
-            for(let i=0; i<5; i++) s[i].className = i < n ? 'active' : '';
-        }
-
-        function openReviews() {
-            document.getElementById('rev-modal').style.display = 'block';
-            if(!document.getElementById('rev-list').innerHTML) buildRevBase();
-        }
-
-        function closeReviews() { document.getElementById('rev-modal').style.display = 'none'; }
-
-        function buildRevBase() {
-            const list = document.getElementById('rev-list');
-            let content = "";
-            for(let i=0; i<222; i++) {
-                let r = baseRev[i % baseRev.length];
-                content += `
-                <div class="rev-item">
-                    <div class="rev-top">
-                        <span class="rev-id">TN-${Math.floor(100000+Math.random()*800000)}</span>
-                        <span style="color:#444">${i+1}d ago</span>
-                    </div>
-                    <div class="rev-stars">${"★".repeat(r.s)}${"☆".repeat(5-r.s)}</div>
-                    <div style="font-size:13px; color:#ccc;">${r.t}</div>
-                </div>`;
-            }
-            list.innerHTML = content;
-        }
-
-        function sendRev() {
-            if(!isAuth) return alert("Спочатку авторизуйтесь!");
-            if(myRate === 0) return alert("Оберіть зірки!");
-            alert("Дякуємо! Відгук відправлено на перевірку модератором.");
-            document.getElementById('rev-text').value = "";
-            setRate(0);
-        }
-    </script>
-        <style>
-        /* Стилі Терміналу */
-        .escrow-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(3,4,7,0.99);
-            z-index: 3000; padding: 20px; overflow-y: auto;
-        }
-        .escrow-card {
-            max-width: 420px; margin: 40px auto; background: #0d0f14;
-            border: 1px solid var(--border); border-radius: 24px; padding: 35px;
-            box-shadow: 0 0 60px rgba(0, 242, 255, 0.07);
-        }
-        .step-label { font-size: 10px; color: var(--accent); font-weight: bold; letter-spacing: 2px; margin-bottom: 20px; }
-        
-        .id-input {
-            width: 100%; background: #05060a; border: 1px solid #1a1c22;
-            padding: 18px; border-radius: 14px; color: white; margin-bottom: 20px;
-            font-family: 'JetBrains Mono', monospace; font-size: 16px; outline: none;
-        }
-        .id-input:focus { border-color: var(--accent); }
-
-        .loader-view { display: none; text-align: center; padding: 30px 0; }
-        .radar {
-            width: 60px; height: 60px; border: 2px solid var(--accent); border-radius: 50%;
-            margin: 0 auto 20px; position: relative; animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
-
-        .pay-view { display: none; animation: fadeIn 0.6s ease; }
-        .amount-display { font-size: 48px; font-weight: 800; color: var(--accent); margin: 15px 0; }
-    </style>
-
-    <div id="escrow-modal" class="escrow-overlay">
-        <div class="escrow-card">
-            <div style="text-align:right; cursor:pointer; color:#444;" onclick="closeEscrow()">✕ CLOSE</div>
-            
-            <div id="step-connect">
-                <div class="step-label">PHASE 01: NODE CONNECTION</div>
-                <h2 style="margin-top:0;">Створення мосту</h2>
-                <p style="color:var(--text-dim); font-size:13px; line-height:1.6;">Введіть ID продавця для ініціації безпечного каналу зв'язку та депонування коштів.</p>
-                <input type="text" class="id-input" id="partner-id" placeholder="TN-XXXXXX">
-                <button class="main-btn" style="width:100%; height:55px; border-radius:14px; font-size:16px;" onclick="connectNodes()">ВСТАНОВИТИ ЗВ'ЯЗОК</button>
-            </div>
-
-            <div id="step-loader" class="loader-view">
-                <div class="radar"></div>
-                <div style="font-family:'JetBrains Mono'; font-size:12px; letter-spacing:1px;">ШИФРУВАННЯ ТУНЕЛЮ...</div>
-                <div id="load-status" style="font-size:10px; color:#444; margin-top:10px;">AUTH_REQ_SENT</div>
-            </div>
-
-            <div id="step-pay" class="pay-view">
-                <div class="step-label">PHASE 02: ASSET DEPOSIT</div>
-                <div style="font-size:12px; color:var(--text-dim);">СУМА ДО ЗАМОРОЖЕННЯ:</div>
-                <div class="amount-display" id="final-amount">--.-- UAH</div>
-                <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:12px; font-size:11px; color:#888; margin-bottom:25px;">
-                    🛡️ Кошти будуть утримуватися системою TRUST_NODE до підтвердження отримання товару/послуги.
-                </div>
-                <button class="main-btn" style="width:100%; height:55px; border-radius:14px; font-size:16px; background:var(--accent); color:black;" onclick="finishPayment()">ОПЛАТИТИ ТА ГАРАНТУВАТИ</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
         function openEscrow() {
-            if(!isAuth) return alert("Потрібна авторизація!");
+            if(!isAuth) return alert(uiTrans[currentLang].auth);
             document.getElementById('escrow-modal').style.display = 'block';
         }
 
-        function closeEscrow() {
-            document.getElementById('escrow-modal').style.display = 'none';
-            // Скидання станів
-            document.getElementById('step-connect').style.display = 'block';
-            document.getElementById('step-loader').style.display = 'none';
-            document.getElementById('step-pay').style.display = 'none';
-        }
+        function closeEscrow() { document.getElementById('escrow-modal').style.display = 'none'; }
 
-        function connectNodes() {
+        function startBridge() {
             const id = document.getElementById('partner-id').value;
-            if(id.length < 5) return alert("Введіть коректний ID партнера");
-
-            document.getElementById('step-connect').style.display = 'none';
-            document.getElementById('step-loader').style.display = 'block';
-
-            // Імітація "професійної" логіки
-            let statuses = ["HANDSHAKE", "KEY_EXCHANGE", "SYNCING_LEDGER", "NODE_ACTIVE"];
+            if(id.length < 5) return alert("Невірний ID");
+            
+            document.getElementById('escrow-step-1').style.display = 'none';
+            document.getElementById('escrow-loader').style.display = 'block';
+            
+            let steps = ["SYNCING...", "HANDSHAKE...", "ENCRYPTING...", "ACTIVE"];
             let i = 0;
             let interval = setInterval(() => {
-                document.getElementById('load-status').innerText = statuses[i];
-                i++;
-                if(i >= statuses.length) {
+                document.getElementById('escrow-status').innerText = steps[i];
+                if(++i >= steps.length) {
                     clearInterval(interval);
                     showPayment();
                 }
@@ -477,24 +194,28 @@
         }
 
         function showPayment() {
-            document.getElementById('step-loader').style.display = 'none';
-            document.getElementById('step-pay').style.display = 'block';
-            
-            // Якщо ти в консолі ввів setAdminPrice, вона підтягнеться
-            const price = customPrice || (Math.floor(Math.random() * 4500) + 400).toLocaleString();
-            document.getElementById('final-amount').innerText = price + " UAH";
+            document.getElementById('escrow-loader').style.display = 'none';
+            document.getElementById('escrow-pay').style.display = 'block';
+            const price = customPrice || (Math.floor(Math.random() * 8000) + 500);
+            document.getElementById('final-price').innerText = price.toLocaleString() + " UAH";
         }
 
-        function finishPayment() {
-            // Посилання на твій ТГ або платіжку
-            window.location.href = "https://t.me/pingvin4ikpororo";
+        function handleSignIn(response) {
+            isAuth = true;
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('auth-section').style.display = 'none';
+            alert("Success: Node Authorized");
+            toggleSidebar();
         }
 
-        // Функція для тебе (через консоль): setAdminPrice(5000)
-        function setAdminPrice(val) {
-            customPrice = val.toLocaleString();
-            console.log("Admin: Price set to " + customPrice);
-        }
-        let customPrice = null;
+        // Функція для тебе в консолі: setPrice(5000)
+        window.setPrice = (v) => { customPrice = v; console.log("Ціна змінена на " + v); };
+
+        console.log("SYSTEM READY. Days online: " + document.getElementById('days-count').innerText);
     </script>
+
+    <style>
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 
